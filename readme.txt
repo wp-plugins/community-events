@@ -18,10 +18,8 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 1. Upload the community-events folder to the /wp-content/plugins/ directory of your web site.
 1. Activate the plugin in the Wordpress Admin.
 1. Using the Configuration Panel for the plugin, create events, venues and categories.
-1. To see the 7-day schedule box, in the Wordpress Admin, create a new page containing the following code:<br/>
-   [community-events-7day]
-1. To see the full schedule, in the Wordpress Admin area, create a new page containing the following code:<br/>
-   [community-events-full]
+1. To see the 7-day schedule box, in the Wordpress Admin, create a new page containing the following code: [community-events-7day]
+1. To see the full schedule, in the Wordpress Admin area, create a new page containing the following code: [community-events-full]
 1. To see a link for the full schedule in the 7-day box, set the address of the full schedule page in the Community Events settings.
 
 == Changelog ==
