@@ -1,0 +1,37 @@
+.community-events-7day { background-color: #888; margin-top: 10px}
+
+.community-events-7day table { width: 100%; }
+
+.ce-7day-toptable { border: 1px solid #000; border-spacing: 3px; padding: 0px !important; }
+
+.ce-7day-innertable { border: 1px solid #ccc; background-color: #fff; }
+
+.ce-daybox { background-color: #ddd; text-align: center; vertical-align: center; margin: 2px; padding: 10px }
+
+.even { border-left: none !important; background-color: #bbb !important; }
+
+.selected { background-color: #69abe5 !important; }
+
+.ce-7day-toptable td:hover { background-color: #eee; }
+
+.ce-events { height: 200px; background-color: #fff; border: 1px solid #ddd; margin-left: 2px; margin-bottom: 2px}
+
+.ce-date { font-size: 20px; font-weight: bold; padding-top: 5px}
+
+.ce-event-name {font-weight: bold; }
+
+.ce-full-schedule-link {background-color: #fff; margin-left: 4px; text-align: center;}
+
+.ce-full-events-table { padding-top: 10px; }
+
+.ce-full-events-table table { width: 100%; border: 1px solid #000; border-collapse:collapse;}
+
+.ce-full-dayrow {background-color:#bbb; padding: 4px; font-size: 16px; border-bottom: solid 1px #777;}
+
+.ce-full-dayevent {background-color:#ddd; padding: 4px; font-size: 12px; border-bottom: solid 1px #777;}
+
+.ce-full-dayvenue {background-color:#ddd; padding: 4px; font-size: 12px; border-bottom: solid 1px #777; border-left: solid 1px #777;}
+
+.ce-full-event-name {background-color: #eee; padding: 4px; border-bottom: solid 1px #777; }
+
+.ce-full-event-venue {background-color:#eee; padding: 4px; border-bottom: solid 1px #777; border-left: solid 1px #777;}
