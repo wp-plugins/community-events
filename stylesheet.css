@@ -2,17 +2,19 @@
 
 .community-events-7day table { width: 100%; }
 
+.even { border-left: none !important; background-color: #bbb !important; }
+
+.ce-7day-toptable td:hover { background-color: #eee; }
+
 .ce-7day-toptable { border: 1px solid #000; border-spacing: 3px; padding: 0px !important; }
 
 .ce-7day-innertable { border: 1px solid #ccc; background-color: #fff; }
 
+.ce-7day-innertable td { background-color: #ddd; }
+
 .ce-daybox { background-color: #ddd; text-align: center; vertical-align: center; margin: 2px; padding: 10px }
 
-.even { border-left: none !important; background-color: #bbb !important; }
-
 .selected { background-color: #69abe5 !important; }
-
-.ce-7day-toptable td:hover { background-color: #eee; }
 
 .ce-events { height: 200px; background-color: #fff; border: 1px solid #ddd; margin-left: 2px; margin-bottom: 2px}
 
@@ -20,7 +22,11 @@
 
 .ce-event-name {font-weight: bold; }
 
+.ce-outlook-event-name {font-weight: bold; padding-left: 10px;}
+
 .ce-full-schedule-link {background-color: #fff; margin-left: 4px; text-align: center;}
+
+.ce-add-event-link {background-color: #fff; margin-left: 4px; text-align: center;}
 
 .ce-full-events-table { padding-top: 10px; }
 
@@ -35,3 +41,21 @@
 .ce-full-event-name {background-color: #eee; padding: 4px; border-bottom: solid 1px #777; }
 
 .ce-full-event-venue {background-color:#eee; padding: 4px; border-bottom: solid 1px #777; border-left: solid 1px #777;}
+
+.ce-outlook-day { font-weight: bold; }
+
+.ce-ticket-link { float: right; padding-right: 3px; }
+
+.ce-venue-name { color: #0000bb; }
+
+.datepick-popup { font-size: 100% }
+
+.seemore {padding-left: 5px; }
+
+.ce-addevent { padding-top: 15px; }
+
+#ce-addeventtitle { font-weight: bold; font-size: 14px; padding-bottom: 10px }
+
+.ce-addeventtable { padding-bottom: 10px; }
+
+.submit { margin-top: 10px }
