@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 0.2.1 =
+* Added missing icons and javascript plugin (TipTip)
+
 = 0.2 =
 * Added calendar button next to date field in back-end to bring up calendar
 * Added paging buttons in event section of admin to navigate events
