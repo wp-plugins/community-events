@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 0.2
+Version: 0.2.1
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz   
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)    
@@ -51,7 +51,6 @@ function ce_install() {
 			  `event_name` varchar(255) DEFAULT NULL,
 			  `event_date` date DEFAULT NULL,
 			  `event_time` varchar(16) DEFAULT NULL,
-			  `event_duration` varchar(16) DEFAULT NULL,
 			  `event_description` varchar(140) DEFAULT NULL,
 			  `event_url` varchar(255) DEFAULT NULL,
 			  `event_ticket_url` varchar(256) DEFAULT NULL,
@@ -114,7 +113,6 @@ function ce_install() {
 		$options['eventticketaddrlabel'] = __('Event Ticket Purchase Link', 'community-events');
 		$options['eventdatelabel'] = __('Event Date', 'community-events');
 		$options['eventtimelabel'] = __('Event Time', 'community-events');
-		$options['eventdurationlabel'] = __('Event Duration', 'community-events');
 		$options['addeventbtnlabel'] = __('Add Event', 'community-events');
 		$options['outlook'] = true;
 		$options['emailnewevent'] = true;
@@ -237,7 +235,7 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 				check_admin_referer('cepp-config');
 								
 				foreach (array('fullscheduleurl', 'addeventurl', 'columns', 'addneweventmsg', 'eventnamelabel', 'eventcatlabel', 'eventvenuelabel', 'eventdesclabel',
-								'eventaddrlabel', 'eventticketaddrlabel', 'eventdatelabel', 'eventtimelabel', 'eventdurationlabel', 'addeventbtnlabel') as $option_name) {
+								'eventaddrlabel', 'eventticketaddrlabel', 'eventdatelabel', 'eventtimelabel', 'addeventbtnlabel') as $option_name) {
 						if (isset($_POST[$option_name])) {
 							$options[$option_name] = $_POST[$option_name];
 						}
@@ -383,8 +381,7 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 									 "event_url" => $_POST['event_url'],
 									 "event_ticket_url" => $_POST['event_ticket_url'],
 									 "event_category" => $_POST['event_category'],
-									 "event_venue" => $_POST['event_venue'],
-									 "event_duration" => $_POST['event_duration']);
+									 "event_venue" => $_POST['event_venue']);
 
 					if (isset($_POST['event_id']))
 						$id = array("event_id" => $_POST['event_id']);
@@ -518,7 +515,7 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 						<tr>
 							<td style='width:200px'><?php _e('Event Ticket Purchase Link Label', 'community-events'); ?></td>
 							<?php if ($options['eventticketaddrlabel'] == "") $options['eventticketaddrlabel'] = __('Event Ticket Purchase Link Label', 'community-events'); ?>
-							<td><input type="text" id="eventticketaddrlabel" name="eventticketaddrlabel" size="30" value="<?php echo $options['linkcustomcatlistentry']; ?>"/></td>
+							<td><input type="text" id="eventticketaddrlabel" name="eventticketaddrlabel" size="30" value="<?php echo $options['eventticketaddrlabel']; ?>"/></td>
 							<td style='width:200px'></td>
 							<td style='width:200px'><?php _e('Event Date Label', 'community-events'); ?></td>
 							<?php if ($options['eventdatelabel'] == "") $options['eventdatelabel'] = __('Event Date', 'community-events'); ?>
@@ -529,11 +526,6 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 							<?php if ($options['eventtimelabel'] == "") $options['eventtimelabel'] = __('Event Time', 'community-events'); ?>
 							<td><input type="text" id="eventtimelabel" name="eventtimelabel" size="30" value="<?php echo $options['eventtimelabel']; ?>"/></td>
 							<td style='width: 20px'></td>
-							<td style='width:200px'><?php _e('Event Duration Label', 'community-events'); ?></td>
-							<?php if ($options['eventdurationlabel'] == "") $options['eventdurationlabel'] = __('Event Duration', 'community-events'); ?>
-							<td><input type="text" id="eventdurationlabel" name="eventdurationlabel" size="30" value="<?php echo $options['eventdurationlabel']; ?>"/></td>
-						</tr>
-						<tr>
 							<td style='width:200px'><?php _e('Add Event Button Label', 'community-events'); ?></td>
 							<?php if ($options['addeventbtnlabel'] == "") $options['addeventbtnlabel'] = __('Add Event', 'community-events'); ?>
 							<td><input type="text" id="addeventbtnlabel" name="addeventbtnlabel" size="30" value="<?php echo $options['addeventbtnlabel']; ?>"/></td>
@@ -778,9 +770,6 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 					<td><input type="text" name="event_time" size="30" <?php if ($mode == "edit") echo "value='" . $selectedevent->event_time. "'";?>/></td>
 					</tr>
 					<tr>
-					<td>Duration</td>
-					<td><input type="text" name="event_duration" size="30" <?php if ($mode == "edit") echo "value='" . $selectedevent->event_duration. "'";?>/></td>
-					</tr>
 					</table>
 					<?php if ($mode == "edit"): ?>
 						<p style="border:0;" class="submit"><input type="submit" name="updateevent" value="Update &raquo;" /></p>
@@ -1162,7 +1151,7 @@ function ce_addevent_func($atts) {
 		if ($_POST['event_name'] != '')
 		{
 			$newevent = array("event_name" => wp_specialchars(stripslashes($_POST['event_name'])), "event_date" => wp_specialchars(stripslashes($_POST['event_date'])), "event_time" => wp_specialchars(stripslashes($_POST['event_time'])),
-				"event_description" => wp_specialchars(stripslashes($_POST['event_description'])), "event_url" => wp_specialchars(stripslashes($_POST['event_url'])), "event_ticket_url" => wp_specialchars(stripslashes($_POST['event_ticket_url'])), "event_venue" => $_POST['event_venue'], "event_category" => $_POST['event_category'], "event_duration" => wp_specialchars(stripslashes($_POST['event_duration'])));
+				"event_description" => wp_specialchars(stripslashes($_POST['event_description'])), "event_url" => wp_specialchars(stripslashes($_POST['event_url'])), "event_ticket_url" => wp_specialchars(stripslashes($_POST['event_ticket_url'])), "event_venue" => $_POST['event_venue'], "event_category" => $_POST['event_category']);
 			
 			$wpdb->insert( $wpdb->prefix.'ce_events', $newevent);
 						
@@ -1181,7 +1170,6 @@ function ce_addevent_func($atts) {
 				$message .= __('Event Ticket Purchase Link', 'community-events') . ": " . $newevent['event_ticket_url'] . "<br /><br />";
 				$message .= __('Event Date', 'community-events') . ": " . $newevent['event_date'] . "<br /><br />";
 				$message .= __('Event Dime', 'community-events') . ": " . $newevent['event_time'] . "<br /><br />";
-				$message .= __('Event Duration', 'community-events') . ": " . $newevent['event_duration'] . "<br /><br />";
 							
 				if ( !defined('WP_ADMIN_URL') )
 					define( 'WP_ADMIN_URL', get_option('siteurl') . '/wp-admin');
@@ -1197,12 +1185,11 @@ function ce_addevent_func($atts) {
 	
 	return $message . ce_addevent($options['columns'], $options['addeventreqlogin'], $options['addneweventmsg'], $options['eventnamelabel'], $options['eventcatlabel'], 
 						$options['eventvenuelabel'], $options['eventdesclabel'], $options['eventaddrlabel'], $options['eventticketaddrlabel'], $options['eventdatelabel'],
-						$options['eventtimelabel'], $options['eventdurationlabel'], $options['addeventbtnlabel']);
+						$options['eventtimelabel'], $options['addeventbtnlabel']);
 }
 
 function ce_addevent($columns = 2, $addeventreqlogin = false, $addneweventmsg = "", $eventnamelabel = "", $eventcatlabel = "", $eventvenuelabel = "", 
-					$eventdesclabel = "", $eventaddrlabel = "", $eventticketaddrlabel = "", $eventdatelabel = "", $eventtimelabel = "", $eventdurationlabel = "",
-					$addeventbtnlabel = "") {
+					$eventdesclabel = "", $eventaddrlabel = "", $eventticketaddrlabel = "", $eventdatelabel = "", $eventtimelabel = "", $addeventbtnlabel = "") {
 
 	global $wpdb;
 	global $cepluginpath;
@@ -1269,10 +1256,7 @@ function ce_addevent($columns = 2, $addeventreqlogin = false, $addneweventmsg = 
 		
 		if ($eventtimelabel == "") $eventtimelabel = __('Event Time', 'community-events');
 		$output .= "<th>" . $eventtimelabel . "</th><td><input type='text' name='event_time' id='event_time' /></td></tr>\n";
-		
-		if ($eventdurationlabel == "") $eventdurationlabel = __('Event Duration', 'community-events');
-		$output .= "<tr><th>" . $eventdurationlabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' name='event_duration' id='event_duration' /></td></tr>\n";
-					
+							
 		$output .= "</table>\n";
 		
 		if ($addeventbtnlabel == "") $addeventbtnlabel = __('Add Event', 'community-events');
