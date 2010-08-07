@@ -2,6 +2,8 @@
 
 .community-events-7day table { width: 100%; }
 
+.community-events-7day img { padding: 0px; margin: 0px; border: 0px }
+
 .even { border-left: none !important; background-color: #bbb !important; }
 
 .ce-7day-toptable td:hover { background-color: #eee; }
@@ -59,3 +61,6 @@
 .ce-addeventtable { padding-bottom: 10px; }
 
 .submit { margin-top: 10px }
+
+#ceaddevent img { padding: 0px; border: 0px; margin: 0px; }
+

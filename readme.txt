@@ -24,6 +24,10 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 0.2.2 =
+* Fixed some image styling to avoid problems with plugins assigning border to images.
+* Fixed: unable to add events in version 0.2 through user form or back-end admin
+
 = 0.2.1 =
 * Added missing icons and javascript plugin (TipTip)
 
