@@ -24,6 +24,14 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 0.3 =
+* Removed duration field on events
+* Change data entry for event time into hours and minutes
+* Added end date field (but not currently using it to display events)
+* Added option to put new events in moderation queue upon user submission
+* Added moderation mechanism on admin page to view only events awaiting moderation and approve them
+* Changed layout of full schedule and add event links
+
 = 0.2.2 =
 * Fixed some image styling to avoid problems with plugins assigning border to images.
 * Fixed: unable to add events in version 0.2 through user form or back-end admin

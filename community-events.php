@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 0.2.2
+Version: 0.3
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz   
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)    
@@ -43,60 +43,6 @@ function ce_install() {
 		}
 	}
 	
-	$wpdb->ceevents = $wpdb->prefix.'ce_events';
-	
-	$result = $wpdb->query("
-			CREATE TABLE IF NOT EXISTS `$wpdb->ceevents` (
-			  `event_id` bigint(20) NOT NULL AUTO_INCREMENT,
-			  `event_name` varchar(255) DEFAULT NULL,
-			  `event_date` date DEFAULT NULL,
-			  `event_time` varchar(16) DEFAULT NULL,
-			  `event_description` varchar(140) DEFAULT NULL,
-			  `event_url` varchar(255) DEFAULT NULL,
-			  `event_ticket_url` varchar(256) DEFAULT NULL,
-			  `event_venue` int(11) DEFAULT NULL,
-			  `event_category` int(11) DEFAULT NULL,
-			  PRIMARY KEY (`event_id`)
-				) $charset_collate") ;
-
-	$wpdb->cecats = $wpdb->prefix.'ce_category';
-	
-	$result = $wpdb->query("
-			CREATE TABLE IF NOT EXISTS `$wpdb->cecats` (
-				`event_cat_id` bigint(20) NOT NULL AUTO_INCREMENT,
-				`event_cat_name` varchar(255) DEFAULT NULL,
-				PRIMARY KEY (`event_cat_id`)
-				) $charset_collate");
-		
-	$catsresult = $wpdb->query("SELECT * from `$wpdb->cecats`");
-			
-	if (!$catsresult)
-		$result = $wpdb->query("
-			INSERT INTO `$wpdb->cecats` (`event_cat_name`) VALUES
-			('Default')");
-
-	$wpdb->cevenues = $wpdb->prefix.'ce_venues';
-					
-	$result = $wpdb->query("
-		CREATE TABLE IF NOT EXISTS `$wpdb->cevenues` (
-			  `ce_venue_id` bigint(20) NOT NULL AUTO_INCREMENT,
-			  `ce_venue_name` varchar(256) DEFAULT NULL,
-			  `ce_venue_address` varchar(256) DEFAULT NULL,
-			  `ce_venue_city` varchar(256) DEFAULT NULL,
-			  `ce_venue_zipcode` varchar(256) DEFAULT NULL,
-			  `ce_venue_phone` varchar(256) DEFAULT NULL,
-			  `ce_venue_email` varchar(256) DEFAULT NULL,
-			  `ce_venue_url` varchar(256) DEFAULT NULL,
-			  PRIMARY KEY (`ce_venue_id`)		
-				) $charset_collate");
-				
-	$venuesresult = $wpdb->query("SELECT * from `$wpdb->cevenues`");
-	
-	if (!$venuesresult)
-		$result = $wpdb->query("
-			INSERT INTO `$wpdb->cevenues` (`ce_venue_name`) VALUES
-			('Default')");	
-	
 	$options = get_option('CE_PP');
 
 	if ($options == false) {
@@ -111,14 +57,91 @@ function ce_install() {
 		$options['eventdesclabel'] = __('Event Description', 'community-events');
 		$options['eventaddrlabel'] = __('Event Web Address', 'community-events');
 		$options['eventticketaddrlabel'] = __('Event Ticket Purchase Link', 'community-events');
-		$options['eventdatelabel'] = __('Event Date', 'community-events');
+		$options['eventdatelabel'] = __('Event Start Date', 'community-events');
 		$options['eventtimelabel'] = __('Event Time', 'community-events');
 		$options['addeventbtnlabel'] = __('Add Event', 'community-events');
+		$options['eventenddatelabel'] = __('Event End Date', 'community-events');
 		$options['outlook'] = true;
 		$options['emailnewevent'] = true;
+		$options['moderateevents'] = true;
+		$options['maxevents7dayview'] = 5;
 		
 		update_option('CE_PP',$options);
+		
+		$wpdb->ceevents = $wpdb->prefix.'ce_events';
+		
+		$result = $wpdb->query("
+				CREATE TABLE IF NOT EXISTS `$wpdb->ceevents` (
+				  `event_id` bigint(20) NOT NULL AUTO_INCREMENT,
+				  `event_name` varchar(255) DEFAULT NULL,
+				  `event_start_date` date DEFAULT NULL,
+				  `event_start_hour` int(11) DEFAULT NULL,
+				  `event_start_minute` int(2) unsigned zerofill DEFAULT NULL,
+				  `event_start_ampm` varchar(2) DEFAULT NULL,
+				  `event_end_date` date DEFAULT NULL,
+				  `event_description` varchar(140) DEFAULT NULL,
+				  `event_url` varchar(255) DEFAULT NULL,
+				  `event_ticket_url` varchar(256) DEFAULT NULL,
+				  `event_venue` int(11) DEFAULT NULL,
+				  `event_category` int(11) DEFAULT NULL,
+				  `event_published` varchar(1) DEFAULT NULL,
+				  PRIMARY KEY (`event_id`)
+					) $charset_collate") ;
+
+		$wpdb->cecats = $wpdb->prefix.'ce_category';
+		
+		$result = $wpdb->query("
+				CREATE TABLE IF NOT EXISTS `$wpdb->cecats` (
+					`event_cat_id` bigint(20) NOT NULL AUTO_INCREMENT,
+					`event_cat_name` varchar(255) DEFAULT NULL,
+					PRIMARY KEY (`event_cat_id`)
+					) $charset_collate");
+			
+		$catsresult = $wpdb->query("SELECT * from `$wpdb->cecats`");
+				
+		if (!$catsresult)
+			$result = $wpdb->query("
+				INSERT INTO `$wpdb->cecats` (`event_cat_name`) VALUES
+				('Default')");
+
+		$wpdb->cevenues = $wpdb->prefix.'ce_venues';
+						
+		$result = $wpdb->query("
+			CREATE TABLE IF NOT EXISTS `$wpdb->cevenues` (
+				  `ce_venue_id` bigint(20) NOT NULL AUTO_INCREMENT,
+				  `ce_venue_name` varchar(256) DEFAULT NULL,
+				  `ce_venue_address` varchar(256) DEFAULT NULL,
+				  `ce_venue_city` varchar(256) DEFAULT NULL,
+				  `ce_venue_zipcode` varchar(256) DEFAULT NULL,
+				  `ce_venue_phone` varchar(256) DEFAULT NULL,
+				  `ce_venue_email` varchar(256) DEFAULT NULL,
+				  `ce_venue_url` varchar(256) DEFAULT NULL,
+				  PRIMARY KEY (`ce_venue_id`)		
+					) $charset_collate");
+					
+		$venuesresult = $wpdb->query("SELECT * from `$wpdb->cevenues`");
+		
+		if (!$venuesresult)
+			$result = $wpdb->query("
+				INSERT INTO `$wpdb->cevenues` (`ce_venue_name`) VALUES
+				('Default')");	
+
 	}
+	else
+	{
+		if ($options['schemaversion'] < 0.3)
+		{
+			$options['schemaversion'] = 0.3;
+			update_option('CE_PP',$options);
+			
+			$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` ADD `event_start_hour` INT NULL AFTER `event_date`,  ADD `event_start_minute` INT( 2 ) UNSIGNED ZEROFILL NULL AFTER `event_start_hour`,  ADD `event_start_ampm` VARCHAR( 2 ) NULL AFTER `event_start_minute`,  ADD `event_end_date` DATE NULL AFTER `event_start_ampm`;");
+			$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` DROP `event_duration`;");
+			$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` CHANGE `event_date` `event_start_date` DATE NULL DEFAULT NULL");
+			$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` ADD `event_published` VARCHAR( 1 ) NULL;");
+		}
+	}
+	
+	wp_clear_scheduled_hook('ce_daily_event');
 	
 	wp_schedule_event(current_time('timestamp'), 'daily', 'ce_daily_event');
 
@@ -131,22 +154,42 @@ function ce_uninstall() {
 register_activation_hook(CE_FILE, 'ce_install');
 register_deactivation_hook(CE_FILE, 'ce_uninstall');
 
-function print_event_table($currentyear, $currentday, $page) {
+function print_event_table($currentyear, $currentday, $page, $moderate = false) {
 
 	global $wpdb;
+	global $cepluginpath;
+
+	$countquery = "SELECT COUNT(*) from " . $wpdb->prefix . "ce_events where YEAR(event_start_date) = " . $currentyear . " and ( DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " OR DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ") ";
+	
+	if ($moderate == true)
+		$countquery .= " AND event_published = 'N' ";
+		
+	$count = $wpdb->get_var($countquery);	
 	
 	$start = ($page - 1) * 10;
-	$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events where YEAR(event_date) = " . $currentyear . " and DAYOFYEAR(DATE(event_date)) >= " . $currentday . " ORDER by event_date, event_name LIMIT " . $start . ", 10";
+	$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events where YEAR(event_start_date) = " . $currentyear . " and ( DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " OR DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ") ";
 	
-	$events = $wpdb->get_results($eventquery, ARRAY_A);	
-		
-	$output = "<table id='ce-event-list' class='widefat' style='clear:none;width:500px;background: #DFDFDF url(/wp-admin/images/gray-grad.png) repeat-x scroll left top;'>\n";
+	if ($moderate == true)
+		$eventquery .= " AND event_published = 'N' ";
+	
+	$eventquery .= " ORDER by event_start_date, event_name LIMIT " . $start . ", 10";
+	
+	$events = $wpdb->get_results($eventquery, ARRAY_A);
+	
+	$output .= "<div id='ce-event-list'>\n";
+			
+	$output .= "<table class='widefat' style='clear:none;width:500px;background: #DFDFDF url(/wp-admin/images/gray-grad.png) repeat-x scroll left top;'>\n";
 	$output .= "\t<thead>\n";
 	$output .= "\t\t<tr>\n";
 	$output .= "\t\t\t<th scope='col' style='width: 50px' id='id' class='manage-column column-id' >ID</th>\n";
+	
+	if ($moderate == true)
+		$output .= "\t\t\t<th scope='col' style='width: 16px' id='approveevents' class='manage-column column-id' ></th>\n";
+		
 	$output .= "\t\t\t<th scope='col' id='name' class='manage-column column-name' style=''>Name</th>\n";
-	$output .= "\t\t\t<th scope='col' id='day' class='manage-column column-day' style='text-align: right'>Date</th>\n";
+	$output .= "\t\t\t<th scope='col' id='day' class='manage-column column-day' style='text-align: right'>Date(s)</th>\n";
 	$output .= "\t\t\t<th scope='col' style='width: 50px;text-align: right' id='starttime' class='manage-column column-items' style=''>Time</th>\n";
+	$output .= "\t\t\t<th scope='col' style='width: 50px;text-align: right' id='published' class='manage-column column-items' style=''>Published</th>\n";
 	$output .= "\t\t\t<th style='width: 30px'></th>\n";
 	$output .= "\t\t</tr>\n";
 	$output .= "\t</thead>\n";
@@ -157,9 +200,14 @@ function print_event_table($currentyear, $currentday, $page) {
 		foreach($events as $event) {
 			$output .= "\t\t<tr>\n";
 			$output .= "\t\t\t<td class='name column-name' style='background: #FFF'>" . $event['event_id'] . "</td>\n";
+			
+			if ($moderate == true)
+				$output .= "\t\t\t<td style='background: #FFF'><input type='checkbox' name='events[]' value='" . $event['event_id'] . "' /></td>\n";
+				
 			$output .= "\t\t\t<td style='background: #FFF'><a href='?page=community-events.php&amp;editevent=" . $event['event_id'] . "&pagecount=" . $page . "'><strong>" . $event['event_name'] . "</strong></a></td>\n";
-			$output .= "\t\t\t<td style='background: #FFF;text-align:right'>" . $event['event_date'] . "</td>\n";
-			$output .= "\t\t\t<td style='background: #FFF;text-align:right'></td>\n";
+			$output .= "\t\t\t<td style='background: #FFF;text-align:right'>" . $event['event_start_date'] . ($event['event_end_date'] == NULL ? '' : ' - ' . $event['event_end_date']) . "</td>\n";
+			$output .= "\t\t\t<td style='background: #FFF;text-align:right'>" . $event['event_start_hour'] . ":" . $event['event_start_minute'] . " " . $event['event_start_ampm'] . "</td>\n";
+			$output .= "\t\t\t<td style='background: #FFF;text-align:right'>" . $event['event_published'] . "</td>\n";			
 			$output .= "\t\t\t<td style='background:#FFF'><a href='?page=community-events.php&amp;deleteevent=" . $event['event_id'] . "&pagecount=" . $page . "'\n";
 			$output .= "\t\t\tonclick=\"if ( confirm('" . esc_js(sprintf( __("You are about to delete the event '%s'\n  'Cancel' to stop, 'OK' to delete."), $event['event_name'] )) . "') ) { return true;}return false;\"><img src='" . $cepluginpath . "/icons/delete.png' /></a></td>\n";
 			$output .= "\t\t\t</tr>\n";
@@ -167,12 +215,20 @@ function print_event_table($currentyear, $currentday, $page) {
 			}
 	else
 	{
-		$output .= "<tr>No events found.</tr>\n";
+		$output .= "<tr><td  style='background: #FFF' colspan='" . ($moderate == true ? '7' : '6') . "'>No events found" . ($moderate == true ? " to moderate" : "") . ".</td></tr>\n";
 	}
 	
 	$output .= "\t</tbody>\n";
 	$output .= "</table>\n";
+
+	if ($page > 1)
+		$output .= "<div class='navleft' style='float: left; padding-top: 4px'><button id='previouspage' onClick='navigateLeft()'><img alt='Previous page of events' src='" . $cepluginpath . "/icons/resultset_previous.png' /></button></div>\n";
+		
+	if ((($page) * 10) < $count)
+		$output .= "<div class='navright' style='float: right; padding-top: 4px'><button id='nextpage' onClick='navigateRight()'><img alt='Next page of events' src='" . $cepluginpath . "/icons/resultset_next.png' /></button></div>\n";
 	
+	$output .= "</div>\n";
+		
 	return $output;
 }
 
@@ -228,20 +284,21 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 				elseif ($_GET['section'] == 'eventvenues')
 				{
 					$adminpage = 'eventvenues';
-				}				
+				}	
 			}
 			if ( isset($_POST['submit']) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Weekly Schedule for WordPress options.'));
 				check_admin_referer('cepp-config');
 								
 				foreach (array('fullscheduleurl', 'addeventurl', 'columns', 'addneweventmsg', 'eventnamelabel', 'eventcatlabel', 'eventvenuelabel', 'eventdesclabel',
-								'eventaddrlabel', 'eventticketaddrlabel', 'eventdatelabel', 'eventtimelabel', 'addeventbtnlabel') as $option_name) {
+								'eventaddrlabel', 'eventticketaddrlabel', 'eventdatelabel', 'eventtimelabel', 'addeventbtnlabel', 'eventenddatelabel',
+								'maxevents7dayview') as $option_name) {
 						if (isset($_POST[$option_name])) {
 							$options[$option_name] = $_POST[$option_name];
 						}
 					}
 					
-				foreach (array('adjusttooltipposition', 'addeventreqlogin', 'outlook', 'emailnewevent') as $option_name) {
+				foreach (array('adjusttooltipposition', 'addeventreqlogin', 'outlook', 'emailnewevent', 'moderateevents') as $option_name) {
 					if (isset($_POST[$option_name])) {
 						$options[$option_name] = true;
 					} else {
@@ -372,16 +429,22 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 				if (!current_user_can('manage_options')) die(__('You cannot edit the Community Events for WordPress options.'));
 				check_admin_referer('cepp-config');
 				
-				if (isset($_POST['event_name']) && isset($_POST['event_time']) && isset($_POST['event_date']) && $_POST['event_name'] != '')
+				if (isset($_POST['event_name']) && isset($_POST['event_start_hour']) && isset($_POST['event_start_minute']) && isset($_POST['event_start_ampm']) && isset($_POST['event_start_date']) && $_POST['event_name'] != '')
 				{
 					$newevent = array("event_name" => $_POST['event_name'],
 									 "event_description" => $_POST['event_description'],
-									 "event_date" => $_POST['event_date'],
-									 "event_time" => $_POST['event_time'],
+									 "event_start_date" => $_POST['event_start_date'],
+									 "event_start_hour" => $_POST['event_start_hour'],
+									 "event_start_minute" => $_POST['event_start_minute'],
+									 "event_start_ampm" => $_POST['event_start_ampm'],
 									 "event_url" => $_POST['event_url'],
 									 "event_ticket_url" => $_POST['event_ticket_url'],
 									 "event_category" => $_POST['event_category'],
-									 "event_venue" => $_POST['event_venue']);
+									 "event_venue" => $_POST['event_venue'],
+									 "event_published" => 'Y');
+									 
+					if ($_POST['event_end_date'] != '')
+						$newevent['event_end_date'] = $_POST['event_end_date'];
 
 					if (isset($_POST['event_id']))
 						$id = array("event_id" => $_POST['event_id']);
@@ -419,6 +482,9 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 			$cepluginpath = WP_CONTENT_URL.'/plugins/'.plugin_basename(dirname(__FILE__)).'/';
 	
 			$options = get_option('CE_PP');
+			
+			if ($options['schemaversion'] < 0.3)
+				ce_install();
 			
 			?>
 			<div class="wrap">
@@ -461,15 +527,18 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 					<table>
 						<tr>
 							<td style='width: 240px'>Full Schedule URL</td>
-							<td><input style="width:660px" type="text" name="fullscheduleurl" <?php echo "value='" . $options['fullscheduleurl'] . "'";?>/></td>
+							<td colspan='4'><input style="width:660px" type="text" name="fullscheduleurl" <?php echo "value='" . $options['fullscheduleurl'] . "'";?>/></td>
 						</tr>
 						<tr>
 							<td style='width: 240px'>Event submission form URL</td>
-							<td><input style="width:660px" type="text" name="addeventurl" <?php echo "value='" . $options['addeventurl'] . "'";?>/></td>
+							<td colspan='4'><input style="width:660px" type="text" name="addeventurl" <?php echo "value='" . $options['addeventurl'] . "'";?>/></td>
 						</tr>						
 						<tr>
 							<td>Show outlook view in 7-day view</td>
 							<td><input type="checkbox" id="outlook" name="outlook" <?php if ($options['outlook']) echo ' checked="checked" '; ?>/></td>
+							<td style='width: 100px'></td>
+							<td>Max number of events per day in 7-day view</td>
+							<td><input style="width:50px" type="text" name="maxevents7dayview" <?php if ($options['maxevents7dayview'] != '') echo "value='" . $options['maxevents7dayview'] . "'"; else echo "value='5'"; ?>/></td>
 						</tr>
 					</table>
 				</fieldset>
@@ -484,6 +553,10 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 							<td style='width: 20px'></td>
 							<td style='width:200px'><?php _e('Send e-mail when new event is submitted', 'community-events'); ?></td>
 							<td style='width:75px;padding-right:20px'><input type="checkbox" id="emailnewevent" name="emailnewevent" <?php if ($options['emailnewevent']) echo ' checked="checked" '; ?>/></td>							
+						</tr>
+						<tr>
+							<td style='width:200px'><?php _e('Wait for validation before displaying user events', 'community-events'); ?></td>
+							<td style='width:75px;padding-right:20px'><input type="checkbox" id="moderateevents" name="moderateevents" <?php if ($options['moderateevents'] == true || $options['moderateevents'] == '') echo ' checked="checked" '; ?>/></td>							
 						</tr>
 						<tr>
 							<td style='width:200px'><?php _e('Add new event label', 'community-events'); ?></td>
@@ -517,15 +590,20 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 							<?php if ($options['eventticketaddrlabel'] == "") $options['eventticketaddrlabel'] = __('Event Ticket Purchase Link Label', 'community-events'); ?>
 							<td><input type="text" id="eventticketaddrlabel" name="eventticketaddrlabel" size="30" value="<?php echo $options['eventticketaddrlabel']; ?>"/></td>
 							<td style='width:200px'></td>
-							<td style='width:200px'><?php _e('Event Date Label', 'community-events'); ?></td>
-							<?php if ($options['eventdatelabel'] == "") $options['eventdatelabel'] = __('Event Date', 'community-events'); ?>
+							<td style='width:200px'><?php _e('Event Start Date Label', 'community-events'); ?></td>
+							<?php if ($options['eventdatelabel'] == "") $options['eventdatelabel'] = __('Event Start Date', 'community-events'); ?>
 							<td><input type="text" id="eventdatelabel" name="eventdatelabel" size="30" value="<?php echo $options['eventdatelabel']; ?>"/></td>
 						</tr>
 						<tr>
+							<td style='width:200px'><?php _e('Event End Date Label', 'community-events'); ?></td>
+							<?php if ($options['eventenddatelabel'] == "") $options['eventenddatelabel'] = __('Event End Date', 'community-events'); ?>
+							<td><input type="text" id="eventenddatelabel" name="eventenddatelabel" size="30" value="<?php echo $options['eventenddatelabel']; ?>"/></td>
+							<td style='width:200px'></td>
 							<td style='width:200px'><?php _e('Event Time Label', 'community-events'); ?></td>
 							<?php if ($options['eventtimelabel'] == "") $options['eventtimelabel'] = __('Event Time', 'community-events'); ?>
 							<td><input type="text" id="eventtimelabel" name="eventtimelabel" size="30" value="<?php echo $options['eventtimelabel']; ?>"/></td>
-							<td style='width: 20px'></td>
+						</tr>
+						<tr>
 							<td style='width:200px'><?php _e('Add Event Button Label', 'community-events'); ?></td>
 							<?php if ($options['addeventbtnlabel'] == "") $options['addeventbtnlabel'] = __('Add Event', 'community-events'); ?>
 							<td><input type="text" id="addeventbtnlabel" name="addeventbtnlabel" size="30" value="<?php echo $options['addeventbtnlabel']; ?>"/></td>
@@ -693,7 +771,9 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 				
 				<script type="text/javascript">
 				 jQuery(document).ready(function() {
-						jQuery("#datepicker").datepick({dateFormat: 'yyyy-mm-dd', showTrigger: '<button type="button" class="trigger"><img src="<?php echo $cepluginpath; ?>/icons/calendar.png" /></button>', minDate: -0});
+						jQuery("#datepickerstart").datepick({dateFormat: 'yyyy-mm-dd', showTrigger: '<button type="button" class="trigger"><img src="<?php echo $cepluginpath; ?>/icons/calendar.png" /></button>', minDate: -0});
+						jQuery("#datepickerend").datepick({dateFormat: 'yyyy-mm-dd', showTrigger: '<button type="button" class="trigger"><img src="<?php echo $cepluginpath; ?>/icons/calendar.png" /></button>', minDate: -0});
+
 				 });
 				</script>
 				
@@ -762,13 +842,38 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 						<td><input style="width:360px" type="text" name="event_ticket_url" <?php if ($mode == "edit") echo "value='" . $selectedevent->event_ticket_url . "'";?>/></td>
 					</tr>
 					<tr>
-						<td>Date</td>
-						<td><input type="text" id="datepicker" name="event_date" size="30" <?php if ($mode == "edit") echo "value='" . $selectedevent->event_date . "'"; else echo "value='" . date('Y-m-d', current_time('timestamp')) . "'"; ?>/></td>
+						<td>Start Date</td>
+						<td><input type="text" id="datepickerstart" name="event_start_date" size="30" <?php if ($mode == "edit") echo "value='" . $selectedevent->event_start_date . "'"; else echo "value='" . date('Y-m-d', current_time('timestamp')) . "'"; ?>/></td>
 					</tr>
 					<tr>
 					<td>Time</td>
-					<td><input type="text" name="event_time" size="30" <?php if ($mode == "edit") echo "value='" . $selectedevent->event_time. "'";?>/></td>
+					<td>
+						<select name="event_start_hour" style="width: 50px">
+							<?php for ($i = 1; $i <= 12; $i++)
+								  {
+										echo "<option value=" . $i . ">" . $i . "</option>\n";
+								  }
+							?>
+						</select>
+						:
+						<select name="event_start_minute" style="width: 50px">
+							<?php $minutes = array('00', '15', '30', '45');
+								  foreach ($minutes as $minute)
+								  {
+										echo "<option value=" . $minute . ">" . $minute . "</option>\n";
+								  }
+							?>
+						</select>
+						<select name="event_start_ampm" style="width: 50px">
+							<option value="AM">AM</option>
+							<option value="PM">PM</option>
+						</select>						
+					</td>
 					</tr>
+					<tr>
+					<td>End Date</td>
+					<td><input type="text" id="datepickerend" name="event_end_date" size="30" <?php if ($mode == "edit") echo "value='" . $selectedevent->event_end_date . "'"; ?>/></td>
+					</tr>					
 					<tr>
 					</table>
 					<?php if ($mode == "edit"): ?>
@@ -779,6 +884,7 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 				</form>
 				</div>
 				<div style='float: left'>
+				<button id='normalmode'>Event Management Mode</button> <button id='moderate'>Moderation Mode</button> <button id='approveselected'>Approve Selected Events</button><br /><br />
 				<?php 
 					$currentday = date("z", current_time('timestamp')) + 1;
 					if (date("L") == 1 && $currentday > 60)
@@ -786,55 +892,64 @@ if ( ! class_exists( 'CE_Admin' ) ) {
 	
 					$currentyear = date("Y");
 					
-					$eventcountquery = "SELECT count(*) from " . $wpdb->prefix . "ce_events where YEAR(event_date) = " . $currentyear . " and DAYOFYEAR(DATE(event_date)) >= " . $currentday;
+					$eventcountquery = "SELECT count(*) from " . $wpdb->prefix . "ce_events where YEAR(event_start_date) = " . $currentyear . " and DAYOFYEAR(DATE(event_start_date)) >= " . $currentday;
 					$eventcounttotal = $wpdb->get_var($eventcountquery);	
 					
 					if ($_GET['pagecount'] != "")
 						$pagecount = $_GET['pagecount']; 
 					else
 						$pagecount = 1;
-
-					    echo print_event_table($currentyear, $currentday, $pagecount); ?>					
+						
+					    echo print_event_table($currentyear, $currentday, $pagecount, false); ?>					
 						
 						<input type='hidden' name='eventpage' id='eventpage' value='<?php echo $pagecount; ?>' />
-							  
-						<div class='navleft' style='float: left; padding-top: 4px'><button id='previouspage'><img alt="Previous page of events" src='<?php echo $cepluginpath; ?>/icons/resultset_previous.png' /></button></div>
-					  
-						<div class='navright' style='float: right; padding-top: 4px'><button id='nextpage'><img alt="Next page of events" src='<?php echo $cepluginpath; ?>/icons/resultset_next.png' /></button></div>
-					  
+   						<input type='hidden' name='moderatestatus' id='moderatestatus' value='false' />
+							  					  
 						<script type="text/javascript">
-							jQuery(document).ready(function() {
-								var currentpage = <?php echo $pagecount; ?>;
-								if (currentpage < 2) jQuery(".navleft").hide();
-								var eventcounttotal = <?php echo $eventcounttotal; ?>;								
-								if (eventcounttotal < (currentpage * 10)) { jQuery('.navright').hide(); }
-								jQuery(".navright").click(function() { var el = jQuery('#eventpage');
-								var eventcount = <?php echo $eventcounttotal; ?>;
+						
+						function navigateRight()
+						{
+								var el = jQuery('#eventpage');
 								el.val( parseInt( el.val(), 10 ) + 1 );
-								if (el.val() * 10 > eventcount) { 
-									jQuery('.navright').hide()
-								};
-								if (1 < el.val()) { 
-									jQuery('.navleft').show();
-								};
-								var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: el.val() };
+								var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: el.val(), moderate: jQuery('#moderatestatus').val() };
 								jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"Loading data, please wait...\"></div>');
 								jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/get-events-admin.php', map, function(data){
-									jQuery('#ce-event-list').replaceWith(data);
-									});
-								});
-								jQuery(".navleft").click(function() { var el = jQuery('#eventpage');
-								var eventcount = <?php echo $eventcounttotal; ?>;
+									jQuery('#ce-event-list').replaceWith(data);});
+						}
+						
+						function navigateLeft()
+						{
+								var el = jQuery('#eventpage'); 
 								el.val( parseInt( el.val(), 10 ) - 1 );
-								if (el.val() * 10 < eventcount) { 
-									jQuery('.navright').show()
-								};
-								if (1 == el.val()) { 
-									jQuery('.navleft').hide();
-								};
-								var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: el.val() };
+								var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: el.val(), moderate: jQuery('#moderatestatus').val() };
 								jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"Loading data, please wait...\"></div>');jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/get-events-admin.php', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
-								});
+						}
+						
+							jQuery(document).ready(function() {								
+								jQuery('#moderate').click(function() { 
+									jQuery('#moderatestatus').val('true');
+									var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: 1, moderate: 'true' };
+									jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"Loading data, please wait...\"></div>');jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/get-events-admin.php', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
+									jQuery('#eventpage').val(1);
+								} );
+								
+								jQuery('#normalmode').click(function() {
+									jQuery('#moderatestatus').val('false');
+									var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: 1, moderate: 'false' };
+									jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"Loading data, please wait...\"></div>');jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/get-events-admin.php', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
+									jQuery('#eventpage').val(1);
+								} );
+								
+								jQuery('#approveselected').click(function() {
+									var values = new Array();
+									jQuery.each(jQuery("input[name='events[]']:checked"), function() {
+									  values.push(jQuery(this).val());
+									  var map = { eventlist: values };
+									  jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/approveevents.php', map, function(data) {});
+									  var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: 1, moderate: 'true' };									  jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"Loading data, please wait...\"></div>');jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/get-events-admin.php', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
+									});
+
+								} );
 							});
 						</script>								
 						
@@ -853,10 +968,10 @@ function ce_7day_func($atts) {
 	
 	$options = get_option('CE_PP');
 	
-	return ce_7day($options['fullscheduleurl'], $options['outlook'], $options['addeventurl']);
+	return ce_7day($options['fullscheduleurl'], $options['outlook'], $options['addeventurl'], $options['maxevents7dayview'], $options['moderateevents']);
 }
 
-function venuelist ($year = 0, $dayofyear = 0, $outlook = 'true', $showdate = 'false', $maxevents = 5) {
+function venuelist ($year = 0, $dayofyear = 0, $outlook = 'true', $showdate = 'false', $maxevents = 5, $moderateevents = 'false') {
 
 	global $wpdb;
 	global $cepluginpath;
@@ -866,7 +981,11 @@ function venuelist ($year = 0, $dayofyear = 0, $outlook = 'true', $showdate = 'f
 	if ($outlook == 'false')
 	{			
 		$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id ";
-		$eventquery .= "where YEAR(event_date) = " . $year . " and DAYOFYEAR(DATE(event_date)) = " . $dayofyear;
+		$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $dayofyear;
+		
+		if ($moderateevents == 'true' || $moderateevents == "")
+			$eventquery .= " and event_published = 'Y' ";
+		
 		$eventquery .= " order by e.event_name";
 		
 		$events = $wpdb->get_results($eventquery, ARRAY_A);
@@ -914,7 +1033,7 @@ function venuelist ($year = 0, $dayofyear = 0, $outlook = 'true', $showdate = 'f
 			
 		if ($showdate == 'true')
 		{
-			$output .= "<tr><td>Select a date: <input type='text' id='datepicker' name='event_date' size='30' /><input type='hidden' id='dayofyear' name='dayofyear' size='30' /><input type='hidden' id='year' name='year' size='30' />\n";
+			$output .= "<tr><td>Select a date: <input type='text' id='datepicker' name='event_start_date' size='30' /><input type='hidden' id='dayofyear' name='dayofyear' size='30' /><input type='hidden' id='year' name='year' size='30' />\n";
 			$output .= "<button id='displayDate'>Go!</button></td></tr>\n";
 		}
 	}
@@ -925,7 +1044,11 @@ function venuelist ($year = 0, $dayofyear = 0, $outlook = 'true', $showdate = 'f
 			$calculatedday = $dayofyear + $i;
 		
 			$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id ";
-			$eventquery .= "where YEAR(event_date) = " . $year . " and DAYOFYEAR(DATE(event_date)) = " . $calculatedday;
+			$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $calculatedday;
+			
+			if ($moderateevents == 'true' || $moderateevents == "")
+				$eventquery .= " and event_published = 'Y' ";
+			
 			$eventquery .= " order by e.event_name";
 			$dayevents = $wpdb->get_results($eventquery, ARRAY_A);
 			
@@ -976,7 +1099,7 @@ function venuelist ($year = 0, $dayofyear = 0, $outlook = 'true', $showdate = 'f
 				$output .= "<span class='ce-outlook-event-name'>No events.</span></td></tr>\n";		
 		}
 		
-		$output .= "<tr><td>Select a date: <input type='text' id='datepicker' name='event_date' size='30' /><input type='hidden' id='dayofyear' name='dayofyear' size='30' /><input type='hidden' id='year' name='year' size='30' />\n";
+		$output .= "<tr><td>Select a date: <input type='text' id='datepicker' name='event_start_date' size='30' /><input type='hidden' id='dayofyear' name='dayofyear' size='30' /><input type='hidden' id='year' name='year' size='30' />\n";
 		$output .= "<button id='displayDate'>Go!</button></td></tr>\n";
 	}
 	
@@ -993,7 +1116,7 @@ function venuelist ($year = 0, $dayofyear = 0, $outlook = 'true', $showdate = 'f
 }
 
 	
-function ce_7day($fullscheduleurl = '', $outlook = true, $addeventurl = '') {
+function ce_7day($fullscheduleurl = '', $outlook = true, $addeventurl = '', $maxevents = 5, $moderateevents = true) {
 	global $wpdb;
 	global $cepluginpath;
 	
@@ -1007,7 +1130,7 @@ function ce_7day($fullscheduleurl = '', $outlook = true, $addeventurl = '') {
 	$output = "<SCRIPT LANGUAGE=\"JavaScript\">\n";
 
 	$output .= "function showDayEvents ( _dayofyear, _year, _outlook, _showdate) {\n";
-	$output .= "var map = {dayofyear : _dayofyear, year : _year, outlook: _outlook, showdate: _showdate }\n";
+	$output .= "var map = {dayofyear : _dayofyear, year : _year, outlook: _outlook, showdate: _showdate, maxevents: " . $maxevents . ", moderateevents: '" . ($moderateevents == true ? 'true' : 'false') . "'}\n";
 	$output .= "\tjQuery('.ce-7day-innertable').replaceWith('<div class=\"ce-7day-innertable\"><img src=\"" . WP_PLUGIN_URL . "/community-events/icons/Ajax-loader.gif\" alt=\"Loading data, please wait...\"></div>');jQuery.get('" . WP_PLUGIN_URL . "/community-events/get-events.php', map, function(data){jQuery('.ce-7day-innertable').replaceWith(data);});\n";
 	$output .= "}\n\n";
 	
@@ -1051,20 +1174,47 @@ function ce_7day($fullscheduleurl = '', $outlook = true, $addeventurl = '') {
 
 	$output .= "</tr>\n\t<tr><td class='ce-inner-table-row' colspan='" . (($outlook == true) ? 8 : 7) . "'>\n";
 	
-	if ($outlook == true)
-		$output .= venuelist($currentyear, $currentday, 'true');
-	else
-		$output .= venuelist($currentyear, $currentday, 'false');
+	$output .= venuelist($currentyear, $currentday, ($outlook == true ? 'true' : 'false'), 'false', $maxevents, ($moderateevents == true ? "true" : "false"));
+
 	$output .= "\t</td></tr>\n";
 	
-	if ($fullscheduleurl != '')
-		$output .= "<tr class='ce-full-schedule-link'><td colspan='" . (($outlook == true) ? 8 : 7) . "'><a href='" . $fullscheduleurl . "'>Full Schedule</a></td></tr>";
+	if ($fullscheduleurl != '' || $addeventurl != '')
+	{
+		$output .= "<tr class='ce-full-schedule-link'>\n";
 		
-	if ($addeventurl != '')
-		$output .= "<tr class='ce-add-event-link'><td colspan='" . (($outlook == true) ? 8 : 7) . "'><a href='" . $addeventurl . "'>Submit your own event</a></td></tr>";
+		if ($fullscheduleurl != '')
+		{
+			if ($outlook == true && $addeventurl != '')
+				$colspan = 3;
+			elseif ($outlook == true && $addeventurl == '')
+				$colspan = 8;
+			elseif ($outlook == false && $addeventurl != '')
+				$colspan = 3;
+			elseif ($outlook == false && $addeventurl == '')
+				$colspan = 7;			
+				
+			$output .= "<td colspan='" . $colspan . "'><a href='" . $fullscheduleurl . "'>Full Schedule</a></td>";
+		}
+			
+		if ($addeventurl != '')
+		{
+			if ($outlook == true && $fullscheduleurl != '')
+				$colspan = 5;
+			elseif ($outlook == true && $fullscheduleurl == '')
+				$colspan = 8;
+			elseif ($outlook == false && $fullscheduleurl != '')
+				$colspan = 4;
+			elseif ($outlook == false && $fullscheduleurl == '')
+				$colspan = 7;			
+
+			$output .= "<td colspan='" . $colspan . "' class='ce-add-event-link'><a href='" . $addeventurl . "'>Submit your own event</a></td>";
+		}
 		
+		$output .= "</tr>\n";
 	
-	$output .= "</table></div>\n";
+	}		
+	
+	$output .= "</table></div>\n";	
 
  	return $output;
 }
@@ -1075,10 +1225,13 @@ function ce_full_func($atts) {
 	
 	$options = get_option('CE_PP');
 	
-	return ce_full();
+	if ($options['schemaversion'] < 0.3)
+		ce_install();
+	
+	return ce_full($options['moderateevents']);
 }
 
-function ce_full() {
+function ce_full($moderateevents = true) {
 		global $wpdb;
 	
 	$currentday = date("z", current_time('timestamp')) + 1;
@@ -1087,11 +1240,15 @@ function ce_full() {
 	
 	$currentyear = date("Y");	
 	
-	$eventquery = "SELECT *, UNIX_TIMESTAMP(event_date) as datestamp, DAYOFYEAR(DATE(event_date)) as doy from " . $wpdb->prefix . "ce_events e LEFT JOIN ";
-	$eventquery .= $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id where (YEAR(event_date) = " . $currentyear;
-	$eventquery .= " and DAYOFYEAR(DATE(event_date)) >= " . $currentday . ") ";
-	$eventquery .= " or YEAR(event_date) > " . $currentyear;
-	$eventquery .= " order by event_date, event_name";
+	$eventquery = "SELECT *, UNIX_TIMESTAMP(event_start_date) as datestamp, DAYOFYEAR(DATE(event_start_date)) as doy from " . $wpdb->prefix . "ce_events e LEFT JOIN ";
+	$eventquery .= $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id where ((YEAR(event_start_date) = " . $currentyear;
+	$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . ") ";
+	$eventquery .= " or YEAR(event_start_date) > " . $currentyear . ") ";
+	
+	if ($moderateevents == true || $moderateevents == "")
+		$eventquery .= " and event_published = 'Y' ";
+	
+	$eventquery .= " order by event_start_date, event_name";
 	$events = $wpdb->get_results($eventquery, ARRAY_A);
 	
 	$doy = 0;
@@ -1143,15 +1300,26 @@ function ce_addevent_func($atts) {
 	), $atts));
 	
 	global $wpdb;
-	
+		
 	$options = get_option('CE_PP');
+	
+	if ($options['schemaversion'] < 0.3)
+		ce_install();	
 	
 	if ($_POST['event_name'])
 	{
 		if ($_POST['event_name'] != '')
 		{
-			$newevent = array("event_name" => wp_specialchars(stripslashes($_POST['event_name'])), "event_date" => wp_specialchars(stripslashes($_POST['event_date'])), "event_time" => wp_specialchars(stripslashes($_POST['event_time'])),
+			$newevent = array("event_name" => wp_specialchars(stripslashes($_POST['event_name'])), "event_start_date" => wp_specialchars(stripslashes($_POST['event_start_date'])), "event_start_hour" => wp_specialchars(stripslashes($_POST['event_start_hour'])), "event_start_minute" => wp_specialchars(stripslashes($_POST['event_start_minute'])), "event_start_ampm" => wp_specialchars(stripslashes($_POST['event_start_ampm'])),
 				"event_description" => wp_specialchars(stripslashes($_POST['event_description'])), "event_url" => wp_specialchars(stripslashes($_POST['event_url'])), "event_ticket_url" => wp_specialchars(stripslashes($_POST['event_ticket_url'])), "event_venue" => $_POST['event_venue'], "event_category" => $_POST['event_category']);
+				
+			if ($_POST['event_end_date'] != '')
+				$newevent['event_end_date'] = $_POST['event_end_date'];
+				
+			if ($options['moderateevents'] == true || $options['moderateevents'] == '')
+				$newevent['event_published'] = 'N';
+			else
+				$newevent['event_published'] = 'Y';
 			
 			$wpdb->insert( $wpdb->prefix.'ce_events', $newevent);
 						
@@ -1168,8 +1336,8 @@ function ce_addevent_func($atts) {
 				$message .= __('Event Description', 'community-events') . ": " . $newevent['event_description'] . "<br />";
 				$message .= __('Event Web Address', 'community-events') . ": " . $newevent['event_url'] . "<br />";
 				$message .= __('Event Ticket Purchase Link', 'community-events') . ": " . $newevent['event_ticket_url'] . "<br /><br />";
-				$message .= __('Event Date', 'community-events') . ": " . $newevent['event_date'] . "<br /><br />";
-				$message .= __('Event Dime', 'community-events') . ": " . $newevent['event_time'] . "<br /><br />";
+				$message .= __('Event Start Date', 'community-events') . ": " . $newevent['event_start_date'] . "<br /><br />";
+				$message .= __('Event Time', 'community-events') . ": " . $newevent['event_time'] . "<br /><br />";
 							
 				if ( !defined('WP_ADMIN_URL') )
 					define( 'WP_ADMIN_URL', get_option('siteurl') . '/wp-admin');
@@ -1185,11 +1353,12 @@ function ce_addevent_func($atts) {
 	
 	return $message . ce_addevent($options['columns'], $options['addeventreqlogin'], $options['addneweventmsg'], $options['eventnamelabel'], $options['eventcatlabel'], 
 						$options['eventvenuelabel'], $options['eventdesclabel'], $options['eventaddrlabel'], $options['eventticketaddrlabel'], $options['eventdatelabel'],
-						$options['eventtimelabel'], $options['addeventbtnlabel']);
+						$options['eventtimelabel'], $options['addeventbtnlabel'], $options['eventenddatelabel']);
 }
 
 function ce_addevent($columns = 2, $addeventreqlogin = false, $addneweventmsg = "", $eventnamelabel = "", $eventcatlabel = "", $eventvenuelabel = "", 
-					$eventdesclabel = "", $eventaddrlabel = "", $eventticketaddrlabel = "", $eventdatelabel = "", $eventtimelabel = "", $addeventbtnlabel = "") {
+					$eventdesclabel = "", $eventaddrlabel = "", $eventticketaddrlabel = "", $eventdatelabel = "", $eventtimelabel = "", $addeventbtnlabel = "",
+					$eventenddatelabel = "") {
 
 	global $wpdb;
 	global $cepluginpath;
@@ -1248,14 +1417,41 @@ function ce_addevent($columns = 2, $addeventreqlogin = false, $addneweventmsg = 
 		if ($eventticketaddrlabel == "") $eventticketaddrlabel = __('Event Ticket Purchase Link', 'community-events');
 		$output .= "<tr><th>" . $eventticketaddrlabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' size='80' name='event_ticket_url' id='event_ticket_url' /></td></tr>\n";
 		
-		if ($eventdatelabel == "") $eventdatelabel = __('Event Date', 'community-events');
-		$output .= "<tr><th>" . $eventdatelabel . "</th><td><input type='text' name='event_date' id='datepickeraddform' value='" . date('Y-m-d', current_time('timestamp')) . "' /></td>\n";
+		if ($eventdatelabel == "") $eventdatelabel = __('Event Start Date', 'community-events');
+		$output .= "<tr><th>" . $eventdatelabel . "</th><td><input type='text' name='event_start_date' id='datepickeraddform' value='" . date('Y-m-d', current_time('timestamp')) . "' /></td>\n";
 		
 		if ($columns == 1)
 			$output .= "</tr><tr>";
-		
+					
 		if ($eventtimelabel == "") $eventtimelabel = __('Event Time', 'community-events');
-		$output .= "<th>" . $eventtimelabel . "</th><td><input type='text' name='event_time' id='event_time' /></td></tr>\n";
+		$output .= "<th>" . $eventtimelabel . "</th><td>";
+		
+		$output .= "<select name='event_start_hour' style='width: 50px'>\n";
+		for ($i = 1; $i <= 12; $i++)
+		{
+			$output .= "<option value=" . $i . ">" . $i . "</option>\n";
+		}
+		$output .= "</select>:\n";
+
+		$output .= "<select name='event_start_minute' style='width: 50px'>\n";
+		
+		$minutes = array('00', '15', '30', '45');
+		foreach ($minutes as $minute)
+		{
+			$output .= "<option value=" . $minute . ">" . $minute . "</option>\n";
+		}
+		$output .= "</select>\n";
+		
+		$output .= "<select name='event_start_ampm' style='width: 50px'>\n";
+		$output .= "<option value='AM'>AM</option>\n";
+		$output .= "<option value='PM'>PM</option>\n";
+		$output .= "</select>\n";
+		
+		$output .= "</td></tr>\n";
+		
+		if ($eventenddatelabel == "") $eventenddatelabel = __('Event End Date', 'community-events');
+		$output .= "<tr><th>" . $eventenddatelabel . "</th><td colspan='3'><input type='text' name='event_end_date' id='datepickeraddformend' /></td>\n";
+
 							
 		$output .= "</table>\n";
 		
@@ -1268,6 +1464,7 @@ function ce_addevent($columns = 2, $addeventreqlogin = false, $addneweventmsg = 
 		$output .= "<script type='text/javascript'>\n";
 		$output .= "jQuery(document).ready(function() {\n";
 		$output .= "jQuery('#datepickeraddform').datepick({dateFormat: 'yyyy-mm-dd', showTrigger: '<button type=\"button\" class=\"trigger\"><img src=\"" . $cepluginpath . "/icons/calendar.png\" /></button>', minDate: -0});\n";
+		$output .= "jQuery('#datepickeraddformend').datepick({dateFormat: 'yyyy-mm-dd', showTrigger: '<button type=\"button\" class=\"trigger\"><img src=\"" . $cepluginpath . "/icons/calendar.png\" /></button>', minDate: -0});\n";
 		$output .= "});\n";
 		$output .= "</script>\n";
 	}
@@ -1297,8 +1494,8 @@ function ce_daily_cleanup() {
 	
 	$currentyear = date("Y");	
 	
-	$cleanupquery = "DELETE FROM " . $wpdb->prefix . "ce_events e where (YEAR(event_date) <= " . $currentyear;
-	$cleanupquery .= " and DAYOFYEAR(DATE(event_date)) < " . $currentday . ") ";
+	$cleanupquery = "DELETE FROM " . $wpdb->prefix . "ce_events e where (YEAR(event_start_date) <= " . $currentyear;
+	$cleanupquery .= " and DAYOFYEAR(DATE(event_start_date)) < " . $currentday . ") ";
 	
 	$wpdb->get_results($cleanupquery);
 }
