@@ -12,5 +12,5 @@
 	else
 		$moderate = false;
 	
-	echo print_event_table($currentyear, $currentday, $page, $moderate);
+	echo $my_community_events_plugin->print_event_table($currentyear, $currentday, $page, $moderate);
 ?>

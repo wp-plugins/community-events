@@ -24,6 +24,13 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 0.4 =
+* Fixed errors when clicking on dates in schedule
+* Changed calendar plugin to use jQuery date picker
+* Re-arranged back-end code to provide more structure and make admin sections hideable
+* Added search capability
+* Adding paging mechanism when viewing events in admin
+
 = 0.3 =
 * Removed duration field on events
 * Change data entry for event time into hours and minutes

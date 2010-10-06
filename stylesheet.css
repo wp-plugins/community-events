@@ -1,22 +1,26 @@
-.community-events-7day { background-color: #888; margin-top: 10px}
+﻿.community-events-7day { background-color: #69898d; margin-top: 10px; color: #000; font-family: "Arial"; width: 570px;}
 
-.community-events-7day table { width: 100%; }
+.community-events-7day table { margin: 0px !important; border: 1px solid #000 !important}
+
+.community-events-7day tr td { padding: 4px !important; border: none !important; }
 
 .community-events-7day img { padding: 0px; margin: 0px; border: 0px }
 
-.even { border-left: none !important; background-color: #bbb !important; }
+.community-events-7day a { text-decoration: none; color: #FFF; }
 
-.ce-7day-toptable td:hover { background-color: #eee; }
+.community-events-7day a:hover { text-decoration: none; color: #FFF; }
 
-.ce-7day-toptable { border: 1px solid #000; border-spacing: 3px; padding: 0px !important; }
+.even { border-left: none !important; background-color: #a0c1c6 !important; }
 
-.ce-7day-innertable { border: 1px solid #ccc; background-color: #fff; }
+.ce-7day-toptable { border: 1px solid #CCC !important; padding: 0px !important; }
 
-.ce-7day-innertable td { background-color: #ddd; }
+.ce-7day-innertable { background-color: #fff; }
 
-.ce-daybox { background-color: #ddd; text-align: center; vertical-align: center; margin: 2px; padding: 10px }
+.ce-7day-innertable td { background-color: #c6d9db; }
 
-.selected { background-color: #69abe5 !important; }
+.ce-daybox { background-color: #c6d9db; text-align: center; vertical-align: center; margin: 2px; padding: 10px }
+
+.selected { background-color: #22555c !important; }
 
 .ce-events { height: 200px; background-color: #fff; border: 1px solid #ddd; margin-left: 2px; margin-bottom: 2px}
 
@@ -24,11 +28,17 @@
 
 .ce-event-name {font-weight: bold; }
 
+.ce-search {text-align: center; color: #fff; line-height: 12px; }
+
+#ce_event_search {font-family: "Arial" !important;}
+
+.highlight_word {background-color: #FFFF00}
+
 .ce-outlook-event-name {font-weight: bold; padding-left: 10px;}
 
-.ce-full-schedule-link {background-color: #fff; margin-left: 4px; text-align: center;}
+.ce-full-schedule-link {padding-left: 8px; text-align: left;}
 
-.ce-add-event-link {background-color: #fff; margin-right: 4px; text-align: right;}
+.ce-add-event-link {margin-right: 8px; text-align: right;}
 
 .ce-full-events-table { padding-top: 10px; }
 
@@ -48,13 +58,13 @@
 
 .ce-ticket-link { float: right; padding-right: 3px; }
 
-.ce-venue-name { color: #0000bb; }
+.ce-venue-name { color: #444; }
 
 .datepick-popup { font-size: 100% }
 
 .seemore {padding-left: 5px; }
 
-.ce-addevent { padding-top: 15px; }
+.ce-addevent { padding-top: 15px; width: 95%}
 
 #ce-addeventtitle { font-weight: bold; font-size: 14px; padding-bottom: 10px }
 
