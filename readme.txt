@@ -24,6 +24,11 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 0.5 =
+* Fixed: Time Display
+* Added: Events that span multiple days are now correctly displayed on all days
+* Enhanced Full schedule table styling
+
 = 0.4 =
 * Fixed errors when clicking on dates in schedule
 * Changed calendar plugin to use jQuery date picker

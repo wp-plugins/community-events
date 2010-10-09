@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 0.4
+Version: 0.5
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -235,7 +235,7 @@ class community_events_plugin {
 	//extend the admin menu
 	function on_admin_menu() {
 		//add our own option page, you can also add it to different sections or use your own one
-		$this->pagehooktop = add_menu_page(__('Community Events General Options', 'community-events'), "Community Events", 'manage_options', COMMUNITY_EVENTS_ADMIN_PAGE_NAME, array($this, 'on_show_page'));
+		$this->pagehooktop = add_menu_page(__('Community Events General Options', 'community-events'), "Community Events", 'manage_options', COMMUNITY_EVENTS_ADMIN_PAGE_NAME, array($this, 'on_show_page'), $this->cepluginpath . '/icons/Calendar-icon.png');
 		$this->pagehookeventtypes = add_submenu_page( COMMUNITY_EVENTS_ADMIN_PAGE_NAME, __('Community Events - Event Types', 'community-events') , __('Event Types', 'community-events'), 'manage_options', 'community-events-event-types', array($this,'on_show_page'));
 		$this->pagehookvenues = add_submenu_page( COMMUNITY_EVENTS_ADMIN_PAGE_NAME, __('Community Events - Venues', 'community-events') , __('Venues', 'community-events'), 'manage_options', 'community-events-venues', array($this,'on_show_page'));
 		$this->pagehookevents = add_submenu_page( COMMUNITY_EVENTS_ADMIN_PAGE_NAME, __('Community Events - Events', 'community-events') , __('Events', 'community-events'), 'manage_options', 'community-events-events', array($this,'on_show_page')); 
@@ -370,7 +370,7 @@ class community_events_plugin {
 		$data['selectedevent'] = $selectedevent;
 		?>
 		<div id="community-events-general" class="wrap">
-		<?php screen_icon('options-general'); ?>
+		<div class='icon32'><img src="<?php echo $this->cepluginpath . '/icons/Calendar-icon32.png'; ?>" /></div>
 		<h2><?php echo $pagetitle; ?><span style='padding-left: 50px'><a href="http://yannickcorner.nayanna.biz/wordpress-plugins/community-events/" target="linklibrary"><img src="<?php echo $this->cepluginpath; ?>/icons/btn_donate_LG.gif" /></a></span></h2>
 		<form action="admin-post.php" method="post">
 			<?php wp_nonce_field('community-events-general'); ?>
@@ -1218,7 +1218,8 @@ class community_events_plugin {
 		
 		if ($searchstring != '')
 		{
-			$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id ";
+			$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
+			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id ";
 			$eventquery .= "where ((event_name like '%" . $searchstring . "%')";
 			$eventquery .= "    or (ce_venue_name like '%" . $searchstring . "%')";
 			$eventquery .= "    or (event_description like '%" . $searchstring . "%')";
@@ -1228,7 +1229,7 @@ class community_events_plugin {
 				$eventquery .= " and event_published = 'Y' ";
 				
 			$eventquery .= " order by event_start_date";
-			
+						
 			$events = $wpdb->get_results($eventquery, ARRAY_A);   
 			
 			if ($events)
@@ -1242,6 +1243,9 @@ class community_events_plugin {
 					$output .= "<tr><td><span class='ce-event-name'>";
 					$output .= $event['event_start_date'] . " ";
 					
+					if ($event['event_end_date'] != NULL)
+						$output .= "- " . $event['event_end_date'] . " ";
+					
 					if ($event['event_url'] != '')
 						$output .= "<a href='" . $event['event_url'] . "'>";
 
@@ -1252,8 +1256,7 @@ class community_events_plugin {
 					
 					$output .= "</span> ";
 					
-					if ($event['event_time'] != "")
-						$output .= "<span class='ce-event-time'>" . $event['event_time'] . "</span>. ";
+					$output .= "<span class='ce-event-time'>" . $event['event_start_hour'] . ":" . $event['event_start_minute_zeros'] . " " . $event['event_start_ampm'] . "</span>. ";
 						
 					if ($event['ce_venue_name'] != "")
 						$output .= "<span class='tooltip ce-venue-name' title='<strong>" . $event['ce_venue_name'] . "</strong><br />" . $event['ce_venue_address']  . "<br />" . $event['ce_venue_city'] . "<br />" . $event['ce_venue_zipcode'] . "<br />" . $event['ce_venue_email'] . "<br />" . $event['ce_venue_phone'] . "<br />" .  $event['ce_venue_url'] . "'>" . $event['ce_venue_name'] . "</span></td></tr>\n";                    
@@ -1265,13 +1268,25 @@ class community_events_plugin {
 		}
 		elseif ($outlook == 'false')
 		{			
-			$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id ";
+			$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
+			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id ";
 			$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $dayofyear;
+			$eventquery .= " and event_end_date IS NULL ";
+			
+			if ($moderateevents == 'true' || $moderateevents == "")
+				$eventquery .= " and event_published = 'Y' ";
+				
+			$eventquery .= "UNION ";
+			
+			$eventquery .= "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
+			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id ";
+			$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) <= " . $dayofyear;
+			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $dayofyear;
 			
 			if ($moderateevents == 'true' || $moderateevents == "")
 				$eventquery .= " and event_published = 'Y' ";
 			
-			$eventquery .= " order by e.event_name";
+			$eventquery .= " order by event_name";
 			
 			$events = $wpdb->get_results($eventquery, ARRAY_A);
 			
@@ -1305,8 +1320,8 @@ class community_events_plugin {
 					
 					$output .= "</span> ";
 					
-					if ($events[$randomevent]['event_time'] != "")
-						$output .= "<span class='ce-event-time'>" . $events[$randomevent]['event_time'] . "</span>. ";
+					$output .= "<span class='ce-event-time'>" . $events[$randomevent]['event_start_hour'] . ":";
+					$output .= $events[$randomevent]['event_start_minute_zeros'] . " " . $events[$randomevent]['event_start_ampm'] ."</span>. ";
 						
 					if ($events[$randomevent]['ce_venue_name'] != "")
 						$output .= "<span>" . $events[$randomevent]['ce_venue_name'] . "</span></td></tr>\n";
@@ -1330,13 +1345,26 @@ class community_events_plugin {
 			{		
 				$calculatedday = $dayofyear + $i;
 			
-				$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id ";
+				$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
+				$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id ";
 				$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $calculatedday;
+				$eventquery .= " and event_end_date IS NULL ";
 				
 				if ($moderateevents == 'true' || $moderateevents == "")
 					$eventquery .= " and event_published = 'Y' ";
 				
-				$eventquery .= " order by e.event_name";
+				$eventquery .= "UNION ";
+				
+				$eventquery .= "SELECT * , if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
+				$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id ";
+				$eventquery .= "where YEAR(event_start_date) = " . $year;
+				$eventquery .= " AND DAYOFYEAR(DATE(event_start_date)) <= " . $calculatedday . " AND DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday;
+				
+				if ($moderateevents == 'true' || $moderateevents == "")
+					$eventquery .= " and event_published = 'Y' ";
+				
+				$eventquery .= " order by event_name"; 
+				
 				$dayevents = $wpdb->get_results($eventquery, ARRAY_A);
 				
 				$output .= "\t\t<tr><td class='" . ($i % 2 == 0 ? "even" : "odd") . "'>";
@@ -1373,8 +1401,8 @@ class community_events_plugin {
 					
 					$output .= "</span> ";
 					
-					if ($dayevents[$randomentry]['event_time'] != "")
-						$output .= "<span class='ce-event-time'>" . $dayevents[$randomentry]['event_time'] . "</span>. ";
+					$output .= "<span class='ce-event-time'>" . $dayevents[$randomentry]['event_start_hour'] . ":";
+					$output .= $dayevents[$randomentry]['event_start_minute_zeros'] . " " . $dayevents[$randomentry]['event_start_ampm'] . "</span>. ";
 						
 					if ($dayevents[$randomentry]['ce_venue_name'] != "")
 						$output .= "<span class='tooltip ce-venue-name' title='<strong>" . $dayevents[$randomentry]['ce_venue_name'] . "</strong><br />" . $dayevents[$randomentry]['ce_venue_address']  . "<br />" . $dayevents[$randomentry]['ce_venue_city'] . "<br />" . $dayevents[$randomentry]['ce_venue_zipcode'] . "<br />" . $dayevents[$randomentry]['ce_venue_email'] . "<br />" . $dayevents[$randomentry]['ce_venue_phone'] . "<br />" .  $dayevents[$randomentry]['ce_venue_url'] . "'>" . $dayevents[$randomentry]['ce_venue_name'] . "</span>\n";
@@ -1561,7 +1589,7 @@ class community_events_plugin {
 		
 		if ($moderateevents == true || $moderateevents == "")
 			$eventquery .= " and event_published = 'Y' ";
-		
+			
 		$eventquery .= " order by event_start_date, event_name";
 		$events = $wpdb->get_results($eventquery, ARRAY_A);
 		

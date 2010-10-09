@@ -40,19 +40,19 @@
 
 .ce-add-event-link {margin-right: 8px; text-align: right;}
 
-.ce-full-events-table { padding-top: 10px; }
+.ce-full-events-table table { border: none !important; margin: 0px !important;}
 
-.ce-full-events-table table { width: 100%; border: 1px solid #000; border-collapse:collapse;}
+.ce-full-events-table { width: 100%; border: 1px solid #000 !important; border-collapse:collapse;font-family: "Arial";margin: 0 !important;}
 
-.ce-full-dayrow {background-color:#bbb; padding: 4px; font-size: 16px; border-bottom: solid 1px #777;}
+.ce-full-dayrow {background-color:#22555c; padding: 4px; font-size: 16px; border: none !important; font-weight: bold; color: #fff}
 
-.ce-full-dayevent {background-color:#ddd; padding: 4px; font-size: 12px; border-bottom: solid 1px #777;}
+.ce-full-dayevent {background-color:#a0c1c6; padding: 4px; font-size: 12px; border: none !important; font-weight: bold;}
 
-.ce-full-dayvenue {background-color:#ddd; padding: 4px; font-size: 12px; border-bottom: solid 1px #777; border-left: solid 1px #777;}
+.ce-full-dayvenue {background-color:#a0c1c6; padding: 4px; font-size: 12px; border: none !important; font-weight: bold;}
 
-.ce-full-event-name {background-color: #eee; padding: 4px; border-bottom: solid 1px #777; }
+.ce-full-event-name {background-color: #C6D9DB; padding: 4px; font-size: 12px; border: none !important; }
 
-.ce-full-event-venue {background-color:#eee; padding: 4px; border-bottom: solid 1px #777; border-left: solid 1px #777;}
+.ce-full-event-venue {background-color: #C6D9DB; padding: 4px; font-size: 12px; border: none !important; }
 
 .ce-outlook-day { font-weight: bold; }
 
