@@ -24,6 +24,19 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.0 =
+- Added venue importer
+- Added Captcha option
+- Sends mail to administrator when new events are submitted
+
+= 0.6 =
+- Enhanced layout of Full Schedule Event View
+- Added tooltips to events and venues in full schedule view
+- Added links to see more events for the day when viewing 7-day outlook or individual day in outlook box
+- Fixed Full Schedule View to show events that span multiple days
+- Added Stylesheet Editor
+- Adding pagination mechanism
+
 = 0.5 =
 * Fixed: Time Display
 * Added: Events that span multiple days are now correctly displayed on all days

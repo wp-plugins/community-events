@@ -1,7 +1,7 @@
 <?php
 	require_once('../../../wp-load.php');
 	require_once('community-events.php');
-	
+    	
 	$events = $_GET['eventlist'];
 	
 	foreach ($events as $event)

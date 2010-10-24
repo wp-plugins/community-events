@@ -1,4 +1,4 @@
-﻿.community-events-7day { background-color: #69898d; margin-top: 10px; color: #000; font-family: "Arial"; width: 570px;}
+.community-events-7day { background-color: #69898d; margin-top: 10px; color: #000; font-family: "Arial"; width: 570px;}
 
 .community-events-7day table { margin: 0px !important; border: 1px solid #000 !important}
 
@@ -6,7 +6,7 @@
 
 .community-events-7day img { padding: 0px; margin: 0px; border: 0px }
 
-.community-events-7day a { text-decoration: none; color: #FFF; }
+.community-events-7day a { text-decoration: none; color: #FFF; outline: none; }
 
 .community-events-7day a:hover { text-decoration: none; color: #FFF; }
 
@@ -44,13 +44,15 @@
 
 .ce-full-events-table { width: 100%; border: 1px solid #000 !important; border-collapse:collapse;font-family: "Arial";margin: 0 !important;}
 
+.ce-full-events-table img { padding: 0px; margin: 0px; border: 0px }
+
 .ce-full-dayrow {background-color:#22555c; padding: 4px; font-size: 16px; border: none !important; font-weight: bold; color: #fff}
 
 .ce-full-dayevent {background-color:#a0c1c6; padding: 4px; font-size: 12px; border: none !important; font-weight: bold;}
 
 .ce-full-dayvenue {background-color:#a0c1c6; padding: 4px; font-size: 12px; border: none !important; font-weight: bold;}
 
-.ce-full-event-name {background-color: #C6D9DB; padding: 4px; font-size: 12px; border: none !important; }
+.ce-full-event-name {background-color: #C6D9DB; padding: 4px; font-size: 12px; border: none !important; font-weight: bold }
 
 .ce-full-event-venue {background-color: #C6D9DB; padding: 4px; font-size: 12px; border: none !important; }
 
@@ -74,3 +76,48 @@
 
 #ceaddevent img { padding: 0px; border: 0px; margin: 0px; }
 
+.pageselector { margin-top: 20px; text-align: center; font-family: "Arial"}
+
+.selectedpage { margin: 0px 4px 0px 4px; border: 1px solid #000; padding: 7px; background-color: #22555c; font-family: "Arial"; color: #FFF}
+
+.selectedpage a { text-decoration: none; color: #FFF }
+
+.unselectedpage { margin: 0px 4px 0px 4px; border: 1px solid #000; padding: 7px; background-color: #a0c1c6; font-family: "Arial"; color: #000}
+
+.unselectedpage a { text-decoration: none; }
+
+.previousnextactive { margin: 0px 4px 0px 4px; border: 1px solid #000; padding: 7px; background-color: #a0c1c6; font-family: "Arial";}
+
+.previousnextactive a { text-decoration: none; }
+
+.previousnextinactive { margin: 0px 4px 0px 4px; border: 1px solid #000; padding: 7px; background-color: #a0c1c6; color: #dddddd; font-family: "Arial"}
+
+.previousnextinactive a { text-decoration: none; }
+
+.required { color: #FF0000; }
+
+.community-events-full-search { border: 1px #000 solid; padding-left: 12px; padding-top: 14px; margin-bottom: 5px; font-family: "Arial"; background-color: #22555c; color: #fff}
+
+.community-events-full-search-label { font-weight: bold;  margin-right: 10px; }
+
+.community-events-full-search-advanced { font-size: 10px; font-weight: normal; cursor:pointer; cursor:hand; }
+
+.community-events-full-advanced-settings { display: none; }
+
+.community-events-full-std-search { padding-bottom: 8px; }
+
+.advanced-search { margin: 0px !important; padding: 0px !important; border: 0px !important; }
+
+.advanced-search td { border: 0px !important; }
+
+.advanced-search select { margin: 0px; }
+
+.advanced-search input { margin: 0px; }
+
+.advanced-search img { padding: 0px; border: 0px; margin: 0px; }
+
+.ce-full-search-results-header { width: 100%; text-align: center; font-family: "Arial"; font-weight: bold }
+
+.ce-full-search-top-links { font-family: "Arial";}
+
+.ce-full-search-top-links a { text-decoration: none; }

@@ -8,7 +8,9 @@
 	$maxevents = $_GET['maxevents'];
 	$moderateevents = $_GET['moderateevents'];
     $searchstring = $_GET['searchstring'];
+	
+	$options = get_option('CE_PP');
     
-	echo $my_community_events_plugin->venuelist($year, $_GET['dayofyear'], $outlook, $showdate, $maxevents, $moderateevents, $searchstring);
+	echo $my_community_events_plugin->eventlist($year, $_GET['dayofyear'], $outlook, $showdate, $maxevents, $moderateevents, $searchstring, $options['fullscheduleurl']);
 	
 ?>
