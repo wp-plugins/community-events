@@ -24,6 +24,13 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.0.2 =
+* Improvements to better handle single quote in event names, descriptions and venue names
+
+= 1.0.1 =
+* Added option to specify if outlook view should be default when it's displayed
+* Added option to determine if search box should be shown in 7-day outlook view
+
 = 1.0 =
 - Added venue importer
 - Added Captcha option

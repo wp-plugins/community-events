@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 1.0
+Version: 1.0.2
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -136,6 +136,8 @@ class community_events_plugin {
 			$options['fullviewmaxdays'] = 90;
 			$options['captchaevents'] = false;
 			$options['storelinksubmitter'] = false;
+			$options['outlookdefault'] = false;
+			$options['displaysearch'] = true;
 			
 			$stylesheetlocation = CEDIR . '/stylesheettemplate.css';
 			if (file_exists($stylesheetlocation))
@@ -527,7 +529,8 @@ class community_events_plugin {
 				}
 			}
 			
-		foreach (array('adjusttooltipposition', 'addeventreqlogin', 'outlook', 'emailnewevent', 'moderateevents', 'captchaevents', 'storelinksubmitter') as $option_name) {
+		foreach (array('adjusttooltipposition', 'addeventreqlogin', 'outlook', 'emailnewevent', 'moderateevents', 'captchaevents', 'storelinksubmitter',
+						'outlookdefault', 'displaysearch') as $option_name) {
 			if (isset($_POST[$option_name])) {
 				$options[$option_name] = true;
 			} else {
@@ -886,7 +889,7 @@ class community_events_plugin {
 				if ($moderate == true)
 					$output .= "\t\t\t<td style='background: #FFF'><input type='checkbox' name='events[]' value='" . $event['event_id'] . "' /></td>\n";
 					
-				$output .= "\t\t\t<td style='background: #FFF'><a href='admin.php?page=community-events-events&amp;editevent=" . $event['event_id'] . "&pagecount=" . $page . "'><strong>" . $event['event_name'] . "</strong></a></td>\n";
+				$output .= "\t\t\t<td style='background: #FFF'><a href='admin.php?page=community-events-events&amp;editevent=" . $event['event_id'] . "&pagecount=" . $page . "'><strong>" . stripslashes($event['event_name']) . "</strong></a></td>\n";
 				$output .= "\t\t\t<td style='background: #FFF;text-align:right'>" . $event['event_start_date'] . ($event['event_end_date'] == NULL ? '' : ' - ' . $event['event_end_date']) . "</td>\n";
 				$output .= "\t\t\t<td style='background: #FFF;text-align:right'>" . $event['event_start_hour'] . ":" . $event['event_start_minute'] . " " . $event['event_start_ampm'] . "</td>\n";
 				$output .= "\t\t\t<td style='background: #FFF;text-align:right'>" . $event['event_published'] . "</td>\n";			
@@ -956,13 +959,21 @@ class community_events_plugin {
 				<td><?php _e('Show outlook view in 7-day view', 'community-events'); ?></td>
 				<td><input type="checkbox" id="outlook" name="outlook" <?php if ($options['outlook']) echo ' checked="checked" '; ?>/></td>
 				<td style='width: 100px'></td>
-				<td><?php _e('Max number of events per day in 7-day view', 'community-events'); ?></td>
-				<td><input style="width:50px" type="text" name="maxevents7dayview" <?php if ($options['maxevents7dayview'] != '') echo "value='" . $options['maxevents7dayview'] . "'"; else echo "value='5'"; ?>/></td>
+				<td><?php _e('Default to outview view when displayed', 'community-events'); ?></td>
+				<td><input type="checkbox" id="outlookdefault" name="outlookdefault" <?php if ($options['outlookdefault']) echo ' checked="checked" '; ?>/></td>
+			</tr>
+			<tr>
+				<td><?php _e('Show search box in 7-day view', 'community-events'); ?></td>
+				<td><input type="checkbox" id="displaysearch" name="displaysearch" <?php if ($options['displaysearch']) echo ' checked="checked" '; ?>/></td>
 			</tr>
 			<tr>
 				<td><?php _e('Number of events per page in Full View', 'community-events'); ?></td>
 				<td><input style="width:50px" type="text" id="fullvieweventsperpage" name="fullvieweventsperpage" <?php if ($options['fullvieweventsperpage'] != '') echo "value='" . $options['fullvieweventsperpage'] . "'"; else echo "value='20'"; ?>/></td>
 				<td style='width: 100px'></td>
+				<td><?php _e('Max number of events per day in 7-day view', 'community-events'); ?></td>
+				<td><input style="width:50px" type="text" name="maxevents7dayview" <?php if ($options['maxevents7dayview'] != '') echo "value='" . $options['maxevents7dayview'] . "'"; else echo "value='5'"; ?>/></td>
+			</tr>
+			<tr>
 				<td><?php _e('Max Number of days in Full View', 'community-events'); ?></td>
 				<td><input style="width:50px" type="text" id="fullviewmaxdays" name="fullviewmaxdays" <?php if ($options['fullviewmaxdays'] != '') echo "value='" . $options['fullviewmaxdays'] . "'"; else echo "value='90'"; ?>/></td>
 			</tr>
@@ -1068,7 +1079,7 @@ class community_events_plugin {
 						<?php if ($mode == "edit"): ?>
 						<strong><?php _e('Editing Category #', 'community-events'); ?><?php echo $selectedcat->event_cat_id; ?></strong><br /><br />
 						<?php endif; ?>
-						Category Name<br /><br /><input style='width: 95%' type="text" name="name" <?php if ($mode == "edit") echo "value='" . $selectedcat->event_cat_name . "'";?>/>
+						Category Name<br /><br /><input style='width: 95%' type="text" name="name" <?php if ($mode == "edit") echo "value='" . stripslashes($selectedcat->event_cat_name) . "'";?>/>
 						<input type="hidden" name="id" value="<?php if ($mode == "edit") echo $selectedcat->event_cat_id; ?>" />
 					</td>
 					<td style='width: 55%; vertical-align: top'>
@@ -1090,7 +1101,7 @@ class community_events_plugin {
 							<?php foreach($cats as $cat): ?>
 							<tr>
 							<td class='name column-name' style='background: #FFF'><?php echo $cat->event_cat_id; ?></td>
-							<td style='background: #FFF'><a href='admin.php?page=community-events-event-types&amp;editcat=<?php echo $cat->event_cat_id; ?>'><strong><?php echo $cat->event_cat_name; ?></strong></a></td>
+							<td style='background: #FFF'><a href='admin.php?page=community-events-event-types&amp;editcat=<?php echo $cat->event_cat_id; ?>'><strong><?php echo stripslashes($cat->event_cat_name); ?></strong></a></td>
 							<td style='background: #FFF;text-align:right'><?php echo $cat->nbitems; ?></td>
 							<?php if ($cat->nbitems == 0): ?>
 							<td style='background:#FFF'><a href='admin.php?page=community-events-event-types&amp;deletecat=<?php echo $cat->event_cat_id; ?>' 
@@ -1140,15 +1151,15 @@ class community_events_plugin {
 					<table style='width: 100%'>
 						<tr>
 							<td>Venue Name</td>
-							<td><input style="width:95%" type="text" name="ce_venue_name" <?php if ($mode == "edit") echo "value='" . $selectedvenue->ce_venue_name . "'";?>/></td>
+							<td><input style="width:95%" type="text" name="ce_venue_name" <?php if ($mode == "edit") echo "value='" . stripslashes($selectedvenue->ce_venue_name) . "'";?>/></td>
 						</tr>
 						<tr>
 							<td>Venue Address</td>
-							<td><input style="width:95%" type="text" name="ce_venue_address" <?php if ($mode == "edit") echo "value='" . $selectedvenue->ce_venue_address . "'";?>/></td>
+							<td><input style="width:95%" type="text" name="ce_venue_address" <?php if ($mode == "edit") echo "value='" . stripslashes($selectedvenue->ce_venue_address) . "'";?>/></td>
 						</tr>	
 						<tr>
 							<td>Venue City</td>
-							<td><input style="width:95%" type="text" name="ce_venue_city" <?php if ($mode == "edit") echo "value='" . $selectedvenue->ce_venue_city . "'";?>/></td>
+							<td><input style="width:95%" type="text" name="ce_venue_city" <?php if ($mode == "edit") echo "value='" . stripslashes($selectedvenue->ce_venue_city) . "'";?>/></td>
 						</tr>
 						<tr>
 							<td>Venue Zip Code</td>
@@ -1170,7 +1181,7 @@ class community_events_plugin {
 					<input type="hidden" name="ce_venue_id" value="<?php if ($mode == "edit") echo $selectedvenue->ce_venue_id; ?>" />
 				</td>
 				<td style='width=55%; vertical-align: top;'>
-					<?php $venues = $wpdb->get_results("SELECT count( e.event_id ) AS nbitems, v.ce_venue_id, v.ce_venue_name FROM " . $wpdb->prefix . "ce_venues v LEFT JOIN " . $wpdb->prefix . "ce_events e ON e.event_venue = v.ce_venue_id GROUP BY v.ce_venue_name");
+					<?php $venues = $wpdb->get_results("SELECT count( e.event_id ) AS nbitems, v.ce_venue_id, v.ce_venue_name FROM " . $wpdb->prefix . "ce_venues v LEFT JOIN " . $wpdb->prefix . "ce_events e ON e.event_venue = v.ce_venue_id GROUP BY v.ce_venue_id ORDER by v.ce_venue_name");
 
 					if ($venues): ?>
 						<table class='widefat' style='clear:none;width:100%;background: #DFDFDF url(/wp-admin/images/gray-grad.png) repeat-x scroll left top;'>
@@ -1188,7 +1199,7 @@ class community_events_plugin {
 					<?php foreach($venues as $venue): ?>
 						<tr>
 						<td class='name column-name' style='background: #FFF'><?php echo $venue->ce_venue_id; ?></td>
-						<td style='background: #FFF'><a href='admin.php?page=community-events-venues&amp;editvenue=<?php echo $venue->ce_venue_id; ?>'><strong><?php echo $venue->ce_venue_name; ?></strong></a></td>
+						<td style='background: #FFF'><a href='admin.php?page=community-events-venues&amp;editvenue=<?php echo $venue->ce_venue_id; ?>'><strong><?php echo stripslashes($venue->ce_venue_name); ?></strong></a></td>
 						<td style='background: #FFF;text-align:right'><?php echo $venue->nbitems; ?></td>
 						<?php if ($venue->nbitems == 0): ?>
 						<td style='background:#FFF'><a href='admin.php?page=community-events-venues&amp;deletevenue=<?php echo $venue->ce_venue_id; ?>' 
@@ -1323,7 +1334,7 @@ class community_events_plugin {
 						<table>
 						<tr>
 						<td class='required' style='width: 30%'>Event Name</td>
-						<td><input style="width:100%" type="text" id="event_name" name="event_name" onKeyPress='return disableEnterKey(event)' <?php if ($mode == "edit") echo "value='" . $selectedevent->event_name . "'";?>/></td>
+						<td><input style="width:100%" type="text" id="event_name" name="event_name" onKeyPress='return disableEnterKey(event)' <?php if ($mode == "edit") echo "value='" . stripslashes($selectedevent->event_name) . "'";?>/></td>
 						</tr>
 						<tr>
 						<td>Category</td>
@@ -1337,7 +1348,7 @@ class community_events_plugin {
 									else 
 										$selectedstring = ""; 
 										
-								echo "<option value='" . $cat->event_cat_id . "' " . $selectedstring . ">" .  $cat->event_cat_name . "\n";
+								echo "<option value='" . $cat->event_cat_id . "' " . $selectedstring . ">" .  stripslashes($cat->event_cat_name) . "\n";
 							}
 						?></select></td>
 						</tr>
@@ -1353,7 +1364,7 @@ class community_events_plugin {
 									else 
 										$selectedstring = ""; 
 										
-								echo "<option value='" . $venue->ce_venue_id . "' " . $selectedstring . ">" .  $venue->ce_venue_name . "\n";
+								echo "<option value='" . $venue->ce_venue_id . "' " . $selectedstring . ">" .  stripslashes($venue->ce_venue_name) . "\n";
 							}
 						?></select></td>
 						</tr>					
@@ -1533,7 +1544,8 @@ class community_events_plugin {
 		
 		$options = get_option('CE_PP');
 		
-		return $this->ce_7day($options['fullscheduleurl'], $options['outlook'], $options['addeventurl'], $options['maxevents7dayview'], $options['moderateevents']);
+		return $this->ce_7day($options['fullscheduleurl'], $options['outlook'], $options['addeventurl'], $options['maxevents7dayview'], $options['moderateevents'],
+							  $options['displaysearch'], $options['outlookdefault']);
 	}
 
 	function eventlist ($year, $dayofyear, $outlook = 'true', $showdate = 'false', $maxevents = 5, $moderateevents = 'false', $searchstring = '', $fullscheduleurl = '') {
@@ -1566,12 +1578,12 @@ class community_events_plugin {
 					$event['ce_venue_name'] = $this->ce_highlight_phrase($event['ce_venue_name'], $searchstring, '<span class="highlight_word">', '</span>'); 
 					$event['event_description'] = $this->ce_highlight_phrase($event['event_description'], $searchstring, '<span class="highlight_word">', '</span>'); 
 					
-					$output .= "<tr><td><span class='tooltip ce-event-name' title='<strong>Category</strong>: " . $event['event_cat_name'] . "<br />" . $event['event_description'] . "'>";
+					$output .= "<tr><td><span class='tooltip ce-event-name' title='<strong>Category</strong>: " . $event['event_cat_name'] . "<br />" . stripslashes($event['event_description']) . "'>";
 					
 					if ($event['event_url'] != '')
 						$output .= "<a id='Event Link' href='" . $event['event_url'] . "'>";
 
-					$output .= $event['event_name'];
+					$output .= stripslashes($event['event_name']);
 
 					if ($dayevent['event_url'] != '')
 						$output .= "</a>";
@@ -1586,7 +1598,7 @@ class community_events_plugin {
 					if ($event['event_url'] != '')
 						$output .= "<a href='" . $event['event_url'] . "'>";
 
-					$output .= $event['event_name'];
+					$output .= stripslashes($event['event_name']);
 
 					if ($event['event_url'] != '')
 						$output .= "</a>";
@@ -1597,11 +1609,11 @@ class community_events_plugin {
 						
 					if ($event['ce_venue_name'] != "")
 					{
-						$output .= "<span class='tooltip ce-venue-name' title='<strong>" . $event['ce_venue_name'] . "</strong><br />" . $event['ce_venue_address']  . "<br />" . $event['ce_venue_city'] . "<br />" . $event['ce_venue_zipcode'] . "<br />" . $event['ce_venue_email'] . "<br />" . $event['ce_venue_phone'] . "<br />" .  $event['ce_venue_url'] . "'>";
+						$output .= '<span class="tooltip ce-venue-name" title="<strong>' . stripslashes($event['ce_venue_name']) . '</strong><br />' . stripslashes($event['ce_venue_address'])  . '<br />' . stripslashes($event['ce_venue_city']) . '<br />' . $event['ce_venue_zipcode'] . '<br />' . $event['ce_venue_email'] . '<br />' . $event['ce_venue_phone'] . '<br />' .  $event['ce_venue_url'] . '">';
 						if ($fullscheduleurl != '')
 							$output .= "<a href='" . $fullscheduleurl . "?venueset=1&amp;venue=" . $event['ce_venue_id'] . "'>\n";
 						
-						$output .= $event['ce_venue_name'];
+						$output .= stripslashes($event['ce_venue_name']);
 						
 						if ($fullscheduleurl != '')
 							$output .= "</a>";
@@ -1677,12 +1689,12 @@ class community_events_plugin {
 							
 				foreach($randomevents as $randomevent)
 				{					
-					$output .= "<tr><td><span class='tooltip ce-event-name' title='<strong>Category</strong>: " . $events[$randomevent]['event_cat_name'] . "<br />" . $events[$randomevent]['event_description'] . "'>";
+					$output .= "<tr><td><span class='tooltip ce-event-name' title='<strong>Category</strong>: " . $events[$randomevent]['event_cat_name'] . "<br />" . stripslashes($events[$randomevent]['event_description']) . "'>";
 					
 					if ($events[$randomevent]['event_url'] != '')
 						$output .= "<a id='Event Link' href='" . $events[$randomevent]['event_url'] . "'>";
 
-					$output .= $events[$randomevent]['event_name'];
+					$output .= stripslashes($events[$randomevent]['event_name']);
 
 					if ($dayevents[$randomevent]['event_url'] != '')
 						$output .= "</a>";
@@ -1694,12 +1706,12 @@ class community_events_plugin {
 						
 					if ($events[$randomevent]['ce_venue_name'] != "")
 					{
-						$output .= "<span class='tooltip ce-venue-name' title='<strong>" . $events[$randomevent]['ce_venue_name'] . "</strong><br />" . $events[$randomevent]['ce_venue_address']  . "<br />" . $events[$randomevent]['ce_venue_city'] . "<br />" . $events[$randomevent]['ce_venue_zipcode'] . "<br />" . $events[$randomevent]['ce_venue_email'] . "<br />" . $events[$randomevent]['ce_venue_phone'] . "<br />" .  $events[$randomevent]['ce_venue_url'] . "'>";
+						$output .= '<span class="tooltip ce-venue-name" title="<strong>' . stripslashes($events[$randomevent]['ce_venue_name']) . '</strong><br />' . stripslashes($events[$randomevent]['ce_venue_address'])  . '<br />' . stripslashes($events[$randomevent]['ce_venue_city']) . '<br />' . $events[$randomevent]['ce_venue_zipcode'] . '<br />' . $events[$randomevent]['ce_venue_email'] . '<br />' . $events[$randomevent]['ce_venue_phone'] . '<br />' .  $events[$randomevent]['ce_venue_url'] . '">';
 						
 						if ($fullscheduleurl != '')
 							$output .= "<a href='" . $fullscheduleurl . "?venueset=1&amp;venue=" . $events[$randomevent]['ce_venue_id'] . "'>\n";
 						
-						$output .= $events[$randomevent]['ce_venue_name'];
+						$output .= stripslashes($events[$randomevent]['ce_venue_name']);
 						
 						if ($fullscheduleurl != '')
 							$output .= "</a>";
@@ -1709,9 +1721,9 @@ class community_events_plugin {
 							$output .= " / ";
 							
 							if ($fullscheduleurl != '')
-								$output .=  "<a href='" . $fullscheduleurl . "?locationset=1&amp;location=" . $events[$randomevent]['ce_venue_city'] . "'>\n";
+								$output .=  "<a href='" . $fullscheduleurl . "?locationset=1&amp;location=" . stripslashes($events[$randomevent]['ce_venue_city']) . "'>\n";
 								
-							$output .= $events[$randomevent]['ce_venue_city'];
+							$output .= stripslashes($events[$randomevent]['ce_venue_city']);
 							
 							if ($fullscheduleurl != '')
 								$output .= "</a>";
@@ -1795,12 +1807,12 @@ class community_events_plugin {
 				{
 					$randomentry = array_rand($dayevents);
 								
-					$output .= "<span class='tooltip ce-outlook-event-name' title='<strong>Category</strong>: " . $dayevents[$randomentry]['event_cat_name'] . "<br />" . $dayevents[$randomentry]['event_description'] . "'>";
+					$output .= "<span class='tooltip ce-outlook-event-name' title='<strong>Category</strong>: " . $dayevents[$randomentry]['event_cat_name'] . "<br />" . stripslashes($dayevents[$randomentry]['event_description']) . "'>";
 					
 					if ($dayevents[$randomentry]['event_url'] != '')
 						$output .= "<a id='Event Link' href='" . $dayevents[$randomentry]['event_url'] . "'>";
 
-					$output .= $dayevents[$randomentry]['event_name'];
+					$output .= stripslashes($dayevents[$randomentry]['event_name']);
 
 					if ($dayevents[$randomentry]['event_url'] != '')
 						$output .= "</a>";
@@ -1812,12 +1824,12 @@ class community_events_plugin {
 						
 					if ($dayevents[$randomentry]['ce_venue_name'] != "")
 					{
-						$output .= "<span class='tooltip ce-venue-name' title='<strong>" . $dayevents[$randomentry]['ce_venue_name'] . "</strong><br />" . $dayevents[$randomentry]['ce_venue_address']  . "<br />" . $dayevents[$randomentry]['ce_venue_city'] . "<br />" . $dayevents[$randomentry]['ce_venue_zipcode'] . "<br />" . $dayevents[$randomentry]['ce_venue_email'] . "<br />" . $dayevents[$randomentry]['ce_venue_phone'] . "<br />" .  $dayevents[$randomentry]['ce_venue_url'] . "'>";
+						$output .= '<span class="tooltip ce-venue-name" title="<strong>' . wp_specialchars(stripslashes($dayevents[$randomentry]['ce_venue_name'])) . '</strong><br />' . stripslashes($dayevents[$randomentry]['ce_venue_address'])  . '<br />' . stripslashes($dayevents[$randomentry]['ce_venue_city']) . '<br />' . $dayevents[$randomentry]['ce_venue_zipcode'] . '<br />' . $dayevents[$randomentry]['ce_venue_email'] . '<br />' . $dayevents[$randomentry]['ce_venue_phone'] . '<br />' .  $dayevents[$randomentry]['ce_venue_url'] . '">';
 						
 						if ($fullscheduleurl != '')
 							$output .= "<a href='" . $fullscheduleurl . "?venueset=1&amp;venue=" . $dayevents[$randomentry]['ce_venue_id'] . "'>\n";
 						
-						$output .= $dayevents[$randomentry]['ce_venue_name'];
+						$output .= stripslashes($dayevents[$randomentry]['ce_venue_name']);
 						
 						if ($fullscheduleurl != '')
 							$output .= "</a>";
@@ -1827,9 +1839,9 @@ class community_events_plugin {
 							$output .= " / ";
 							
 							if ($fullscheduleurl != '')
-								$output .=  "<a href='" . $fullscheduleurl . "?locationset=1&amp;location=" . $dayevents[$randomentry]['ce_venue_city'] . "'>\n";
+								$output .=  "<a href='" . $fullscheduleurl . "?locationset=1&amp;location=" . stripslashes($dayevents[$randomentry]['ce_venue_city']) . "'>\n";
 								
-							$output .= $dayevents[$randomentry]['ce_venue_city'];
+							$output .= stripslashes($dayevents[$randomentry]['ce_venue_city']);
 							
 							if ($fullscheduleurl != '')
 								$output .= "</a>";
@@ -1870,7 +1882,7 @@ class community_events_plugin {
 	}
 
 		
-	function ce_7day($fullscheduleurl = '', $outlook = true, $addeventurl = '', $maxevents = 5, $moderateevents = true, $displaysearch = true) {
+	function ce_7day($fullscheduleurl = '', $outlook = true, $addeventurl = '', $maxevents = 5, $moderateevents = true, $displaysearch = true, $outlookdefault = false) {
 		global $wpdb;
 		
 		$currentday = date("z", current_time('timestamp')) + 1;
@@ -1919,12 +1931,12 @@ class community_events_plugin {
 		
 		if ($outlook == true)
 		{
-			$output .= "\t<td class='ce-daybox selected' id='day_0_" . $currentyear . "_cell'><a href='#' class='ce-day-link' id='day_0_" . $currentyear . "' onClick=\"showEvents('" . $currentday . "', '" . $currentyear . "', true, false, '');return false;\"><strong>Upcoming Events</strong></a></td>\n";
+			$output .= "\t<td class='ce-daybox " . ($outlookdefault == true ? "selected" : "") . "' id='day_0_" . $currentyear . "_cell'><a href='#' class='ce-day-link' id='day_0_" . $currentyear . "' onClick=\"showEvents('" . $currentday . "', '" . $currentyear . "', true, false, '');return false;\"><strong>Upcoming Events</strong></a></td>\n";
 		}
 		
 		for ($i = 0; $i <= 6; $i++) {
 			$daynumber = $currentday + $i;
-			$output .= "\t<td class='ce-daybox " . ($i % 2 == 0 ? "even" : "odd");
+			$output .= "\t<td class='ce-daybox " . ($i % 2 == 0 ? "even" : "odd") . " " . ((($outlook == false && $i == 0) || ($outlook == true && $i == 0 && $outlookdefault == false)) ? "selected" : "");
 			$output .= "' id='day_" . $daynumber . "_" . $currentyear . "_cell'>\n";
 			
 			$output .= "\t\t<span class='ce-dayname'><a href='#' class='ce-day-link' id='day_" . $daynumber . "_" . $currentyear . "' onClick=\"showEvents('" . $daynumber. "', '" . $currentyear . "', false, false, '');return false;\">" . date("D", strtotime("+" . $i . " day", current_time('timestamp'))) . "<br /><span class='ce-date'>" . date("j", strtotime("+" . $i . " day", current_time('timestamp'))) . "</a></span>\n";
@@ -1934,7 +1946,7 @@ class community_events_plugin {
 
 		$output .= "</tr>\n\t<tr><td class='ce-inner-table-row' colspan='" . (($outlook == true) ? 8 : 7) . "'>\n";
 		
-		$output .= $this->eventlist($currentyear, $currentday, ($outlook == true ? 'true' : 'false'), 'false', $maxevents, ($moderateevents == true ? "true" : "false"), '', $fullscheduleurl);
+		$output .= $this->eventlist($currentyear, $currentday, (($outlook == true && $outlookdefault == true)? 'true' : 'false'), 'false', $maxevents, ($moderateevents == true ? "true" : "false"), '', $fullscheduleurl);
 
 		$output .= "\t</td></tr>\n";
 		
@@ -2071,7 +2083,7 @@ class community_events_plugin {
 
 			foreach ($venuelist as $venue)
 			{
-				$output .= "<option value='" . $venue['ce_venue_id'] . "'>" . $venue['ce_venue_name']. "</option>\n";
+				$output .= "<option value='" . $venue['ce_venue_id'] . "'>" . stripslashes($venue['ce_venue_name']). "</option>\n";
 				
 			}
 			
@@ -2091,7 +2103,7 @@ class community_events_plugin {
 
 			foreach ($categorylist as $category)
 			{
-				$output .= "<option value='" . $category['event_cat_id'] . "'>" . $category['event_cat_name']. "</option>\n";
+				$output .= "<option value='" . $category['event_cat_id'] . "'>" . stripslashes($category['event_cat_name']). "</option>\n";
 				
 			}
 			
@@ -2112,7 +2124,7 @@ class community_events_plugin {
 
 			foreach ($locationlist as $location)
 			{
-				$output .= "<option value='" . $location['ce_venue_city'] . "'>" . $location['ce_venue_city']. "</option>\n";
+				$output .= "<option value='" . $location['ce_venue_city'] . "'>" . stripslashes($location['ce_venue_city']). "</option>\n";
 				
 			}
 			
@@ -2309,25 +2321,25 @@ class community_events_plugin {
 			{
 				if (isset($_GET['search']) && ($_GET['search'] != ''))
 				{
-					$fullevent['event_name'] = $this->ce_highlight_phrase($fullevent['event_name'], $_GET['search'], '<span class="highlight_word">', '</span>'); 
-					$fullevent['ce_venue_name'] = $this->ce_highlight_phrase($fullevent['ce_venue_name'], $_GET['search'], '<span class="highlight_word">', '</span>'); 
-					$fullevent['ce_venue_city'] = $this->ce_highlight_phrase($fullevent['ce_venue_city'], $_GET['search'], '<span class="highlight_word">', '</span>'); 
-					$fullevent['event_description'] = $this->ce_highlight_phrase($fullevent['event_description'], $_GET['search'], '<span class="highlight_word">', '</span>'); 
+					$fullevent['event_name'] = $this->ce_highlight_phrase(stripslashes($fullevent['event_name']), $_GET['search'], '<span class="highlight_word">', '</span>'); 
+					$fullevent['ce_venue_name'] = $this->ce_highlight_phrase(stripslashes($fullevent['ce_venue_name']), $_GET['search'], '<span class="highlight_word">', '</span>'); 
+					$fullevent['ce_venue_city'] = $this->ce_highlight_phrase(stripslashes($fullevent['ce_venue_city']), $_GET['search'], '<span class="highlight_word">', '</span>'); 
+					$fullevent['event_description'] = $this->ce_highlight_phrase(stripslashes($fullevent['event_description']), $_GET['search'], '<span class="highlight_word">', '</span>'); 
 				}
 				
 				if (isset($_GET['venueset']) && isset($_GET['venue']) && ($_GET['venue'] != ''))
 				{
-					$fullevent['ce_venue_name'] = $this->ce_highlight_phrase($fullevent['ce_venue_name'], $fullevent['ce_venue_name'], '<span class="highlight_word">', '</span>'); 
+					$fullevent['ce_venue_name'] = $this->ce_highlight_phrase(stripslashes($fullevent['ce_venue_name']), $fullevent['ce_venue_name'], '<span class="highlight_word">', '</span>'); 
 				}
 			
 				if (isset($_GET['categoryset']) && isset($_GET['category']) && ($_GET['category'] != ''))
 				{
-					$fullevent['event_cat_name'] = $this->ce_highlight_phrase($fullevent['event_cat_name'], $fullevent['event_cat_name'], '<span class="highlight_word">', '</span>'); 
+					$fullevent['event_cat_name'] = $this->ce_highlight_phrase(stripslashes($fullevent['event_cat_name']), $fullevent['event_cat_name'], '<span class="highlight_word">', '</span>'); 
 				}
 			
 				if (isset($_GET['locationset']) && isset($_GET['location']) && ($_GET['location'] != ''))
 				{
-					$fullevent['ce_venue_city'] = $this->ce_highlight_phrase($fullevent['ce_venue_city'], $fullevent['ce_venue_city'], '<span class="highlight_word">', '</span>'); 
+					$fullevent['ce_venue_city'] = $this->ce_highlight_phrase(stripslashes($fullevent['ce_venue_city']), $fullevent['ce_venue_city'], '<span class="highlight_word">', '</span>'); 
 				}
 					
 				if ($doy != $fullevent['queryday'])
@@ -2345,14 +2357,14 @@ class community_events_plugin {
 				
 				$output .= "ce-full-event-label'";
 				
-				$output .= " title='<strong>Category</strong>: " . $fullevent['event_cat_name'] . "<br />" . $fullevent['event_description'] . "'";
+				$output .= " title='<strong>Category</strong>: " . stripslashes($fullevent['event_cat_name']) . "<br />" . stripslashes($fullevent['event_description']) . "'";
 				
 				$output .= ">";
 
 				if ($fullevent['event_url'] != '')
 					$output .= "<a href='" . $fullevent['event_url'] . "'>";
 
-				$output .= $fullevent['event_name'];
+				$output .= stripslashes($fullevent['event_name']);
 
 				if ($fullevent['event_url'] != '')
 					$output .= "</a>";
@@ -2364,7 +2376,7 @@ class community_events_plugin {
 				
 				if ($fullevent['ce_venue_name'] != "")
 				{
-					$output .= "<td class='ce-full-event-venue'><span class='tooltip ce-venue-name' title='<strong>" . $fullevent['ce_venue_name'] . "</strong><br />" . $fullevent['ce_venue_address']  . "<br />" . $fullevent['ce_venue_city'] . "<br />" . $fullevent['ce_venue_zipcode'] . "<br />" . $fullevent['ce_venue_email'] . "<br />" . $fullevent['ce_venue_phone'] . "<br />" .  $fullevent['ce_venue_url'] . "'><a href='" . get_permalink() . "?venueset=1&amp;venue=" . $fullevent['ce_venue_id'] . "'>" . $fullevent['ce_venue_name'] . "</a> / <a href='" . get_permalink() . "?locationset=1&amp;location=" . $fullevent['ce_venue_city'] . "'>" . $fullevent['ce_venue_city'] . "</a></span>";
+					$output .= '<td class="ce-full-event-venue"><span class="tooltip ce-venue-name" title="<strong>' . stripslashes($fullevent['ce_venue_name']) . '</strong><br />' . stripslashes($fullevent['ce_venue_address'])  . '<br />' . stripslashes($fullevent['ce_venue_city']) . '<br />' . $fullevent['ce_venue_zipcode'] . '<br />' . $fullevent['ce_venue_email'] . '<br />' . $fullevent['ce_venue_phone'] . '<br />' .  $fullevent['ce_venue_url'] . '"><a href="' . get_permalink() . '?venueset=1&amp;venue=' . $fullevent['ce_venue_id'] . '">' . stripslashes($fullevent['ce_venue_name']) . '</a> / <a href="' . get_permalink() . '?locationset=1&amp;location=' . stripslashes($fullevent['ce_venue_city']) . '">' . stripslashes($fullevent['ce_venue_city']) . '</a></span>';
 					
 					 if ($fullevent['event_ticket_url'] != "")
 					 {
@@ -2675,7 +2687,7 @@ class community_events_plugin {
 					else 
 						$selectedstring = ""; 
 						
-				$output .= "<option value='" . $cat->event_cat_id . "' " . $selectedstring . ">" .  $cat->event_cat_name . "\n";
+				$output .= "<option value='" . $cat->event_cat_id . "' " . $selectedstring . ">" .  stripslashes($cat->event_cat_name) . "\n";
 			}
 			$output .= "</select></td>\n";
 			
@@ -2693,12 +2705,12 @@ class community_events_plugin {
 					else 
 						$selectedstring = ""; 
 						
-				$output .= "<option value='" . $venue->ce_venue_id . "' " . $selectedstring . ">" .  $venue->ce_venue_name . "\n";
+				$output .= "<option value='" . $venue->ce_venue_id . "' " . $selectedstring . ">" .  stripslashes($venue->ce_venue_name) . "\n";
 			}
 			$output .= "</select></td></tr>\n";			
 			
 			if ($eventdesclabel == "") $eventdesclabel = __('Event Description', 'community-events');
-			$output .= "<tr><th>" . $eventdesclabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='event_description' id='event_description' value='" . $captureddata['event_description'] . "'/></td></tr>\n";				
+			$output .= "<tr><th>" . $eventdesclabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='event_description' id='event_description' value='" . stripslashes($captureddata['event_description']) . "'/></td></tr>\n";				
 				
 			if ($eventaddrlabel == "") $eventaddrlabel = __('Event Web Address', 'community-events');
 			$output .= "<tr><th>" . $eventaddrlabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='event_url' id='event_url' value='" . $captureddata['event_url'] . "' /></td></tr>\n";
