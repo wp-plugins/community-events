@@ -24,6 +24,12 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.0.3 =
+* Added option to generate RSS feed for upcoming events. Outputs events for the day.
+* Fixed problems with display of multi-day events in 7-day Outlook View
+* Fixed problem with display of multi-day event in admin section
+* Fixed problem with events in next year showing up every day until day of event
+
 = 1.0.2 =
 * Improvements to better handle single quote in event names, descriptions and venue names
 

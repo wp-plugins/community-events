@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 1.0.2
+Version: 1.0.3
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -22,13 +22,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA*/
 
 define('COMMUNITY_EVENTS_ADMIN_PAGE_NAME', 'community-events');
-
-if (is_file(trailingslashit(ABSPATH.PLUGINDIR).'community-events.php')) {
-	define('CE_FILE', trailingslashit(ABSPATH.PLUGINDIR).'community-events.php');
-}
-else if (is_file(trailingslashit(ABSPATH.PLUGINDIR).'community-events/community-events.php')) {
-	define('CE_FILE', trailingslashit(ABSPATH.PLUGINDIR).'community-events/community-events.php');
-}
 
 define('CEDIR', dirname(__FILE__) . '/');
 
@@ -72,8 +65,8 @@ class community_events_plugin {
 		
 		add_action('ce_daily_event', array($this, 'ce_daily_cleanup'));
 		
-		register_activation_hook(CE_FILE, array($this, 'ce_install'));
-		register_deactivation_hook(CE_FILE, array($this, 'ce_uninstall'));
+		register_activation_hook(__FILE__, array($this, 'ce_install'));
+		register_deactivation_hook(__FILE__, array($this, 'ce_uninstall'));
 	}
 	
 	//for WordPress 2.8 we have to tell, that we support 2 columns !
@@ -138,6 +131,10 @@ class community_events_plugin {
 			$options['storelinksubmitter'] = false;
 			$options['outlookdefault'] = false;
 			$options['displaysearch'] = true;
+			$options['publishrss'] = true;
+			$options['rssfeedtitle'] = 'Community Events Calendar RSS Feed';
+			$options['rssfeeddescription'] = 'This is a default description for the RSS Feed';
+			$options['rssfeedtargetaddress'] = '';
 			
 			$stylesheetlocation = CEDIR . '/stylesheettemplate.css';
 			if (file_exists($stylesheetlocation))
@@ -309,6 +306,7 @@ class community_events_plugin {
 		add_meta_box('communityevents_general_usage_meta_box', __('Usage Instructions', 'community-events'), array($this, 'general_usage_meta_box'), $this->pagehooktop, 'normal', 'high');
 		add_meta_box('communityevents_general_config_meta_box', __('General Configuration', 'community-events'), array($this, 'general_config_meta_box'), $this->pagehooktop, 'normal', 'high');		
 		add_meta_box('communityevents_general_user_sub_meta_box', __('Event User Submission', 'community-events'), array($this, 'general_user_sub_meta_box'), $this->pagehooktop, 'normal', 'high');		
+		add_meta_box('communityevents_general_rssgen_meta_box', __('RSS Feed Generation', 'community-events'), array($this, 'general_user_rssgen_box'), $this->pagehooktop, 'normal', 'high');		
 		add_meta_box('communityevents_general_save_meta_box', __('Save', 'community-events'), array($this, 'general_save_meta_box'), $this->pagehooktop, 'side', 'high');
 		add_meta_box('communityevents_event_types_meta_box', __('Event Types Editor', 'community-events'), array($this, 'event_types_meta_box'), $this->pagehookeventtypes, 'normal', 'high');
 		add_meta_box('communityevents_event_types_save_meta_box', __('Save', 'community-events'), array($this, 'event_types_save_meta_box'), $this->pagehookeventtypes, 'side', 'high');
@@ -523,14 +521,14 @@ class community_events_plugin {
 		
 		foreach (array('fullscheduleurl', 'addeventurl', 'columns', 'addneweventmsg', 'eventnamelabel', 'eventcatlabel', 'eventvenuelabel', 'eventdesclabel',
 						'eventaddrlabel', 'eventticketaddrlabel', 'eventdatelabel', 'eventtimelabel', 'addeventbtnlabel', 'eventenddatelabel',
-						'maxevents7dayview', 'fullviewmaxdays', 'fullvieweventsperpage') as $option_name) {
+						'maxevents7dayview', 'fullviewmaxdays', 'fullvieweventsperpage', 'rssfeedtitle', 'rssfeeddescription', 'rssfeedtargetaddress') as $option_name) {
 				if (isset($_POST[$option_name])) {
 					$options[$option_name] = $_POST[$option_name];
 				}
 			}
 			
 		foreach (array('adjusttooltipposition', 'addeventreqlogin', 'outlook', 'emailnewevent', 'moderateevents', 'captchaevents', 'storelinksubmitter',
-						'outlookdefault', 'displaysearch') as $option_name) {
+						'outlookdefault', 'displaysearch', 'publishfeed') as $option_name) {
 			if (isset($_POST[$option_name])) {
 				$options[$option_name] = true;
 			} else {
@@ -852,7 +850,25 @@ class community_events_plugin {
 		$count = $wpdb->get_var($countquery);	
 		
 		$start = ($page - 1) * 10;
-		$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events where YEAR(event_start_date) = " . $currentyear . " and ( DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " OR DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ") ";
+		$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events ";
+		
+		$eventquery .= "WHERE ((YEAR(event_start_date) = " . $currentyear . ") and DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " AND event_end_date IS NULL) ";
+		
+		$eventquery .= " OR ((YEAR(event_start_date) = " . $currentyear;
+		$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $currentday . " ";
+		$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ") ";
+		
+		$eventquery .= "OR (YEAR(event_start_date) < " . $currentyear;
+		$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $currentday;
+		$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) >= " . $currentyear . ") ";
+		
+		$eventquery .= "OR (YEAR(event_end_date) > " . $currentyear . ") ";
+		
+		$eventquery .= "OR (YEAR(event_start_date) > " . $currentyear . ") ";
+		
+		$eventquery .= "OR (YEAR(event_end_date) = " . $currentyear;
+		$eventquery .= " and YEAR(DATE(event_start_date)) < " . $currentyear;
+		$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ")) ";
 		
 		if ($moderate == true)
 			$eventquery .= " AND event_published = 'N' ";
@@ -1058,6 +1074,31 @@ class community_events_plugin {
 
 	<?php }
 	
+	function general_user_rssgen_box($data) {
+		$options = $data['options'];
+		?>
+
+						<table>
+						<tr>
+							<td style='width:200px'><?php _e('Add Event RSS Feed to page header', 'community-events'); ?></td>
+							<td style='width:75px;padding-right:20px'><input type="checkbox" id="publishfeed" name="publishfeed" <?php if ($options['publishfeed']) echo ' checked="checked" '; ?>/></td>
+						</tr>
+						<tr>
+							<td style='width:200px'><?php _e('RSS Feed Title', 'community-events'); ?></td>
+							<td style='width:75px;padding-right:20px'><input type="text" id="rssfeedtitle" name="rssfeedtitle" size="80" value="<?php echo $options['rssfeedtitle']; ?>"/></td>
+						</tr>
+						<tr>
+							<td style='width:200px'><?php _e('RSS Feed Description', 'community-events'); ?></td>
+							<td style='width:75px;padding-right:20px'><input type="text" id="rssfeeddescription" name="rssfeeddescription" size="80" value="<?php echo $options['rssfeeddescription']; ?>"/></td>							
+						</tr>
+						<tr>
+							<td style='width:200px'><?php _e('RSS Feed Target Address', 'community-events'); ?></td>
+							<td style='width:75px;padding-right:20px'><input type="text" id="rssfeedtargetaddress" name="rssfeedtargetaddress" size="80" value="<?php echo $options['rssfeedtargetaddress']; ?>"/></td>							
+						</tr>						
+					</table>
+
+	<?php }	
+	
 	function general_save_meta_box($data) {
 		$options = $data['options'];
 		?>
@@ -1151,7 +1192,7 @@ class community_events_plugin {
 					<table style='width: 100%'>
 						<tr>
 							<td>Venue Name</td>
-							<td><input style="width:95%" type="text" name="ce_venue_name" <?php if ($mode == "edit") echo "value='" . stripslashes($selectedvenue->ce_venue_name) . "'";?>/></td>
+							<td><input style="width:95%" type="text" name="ce_venue_name" <?php if ($mode == "edit") echo 'value="' . stripslashes($selectedvenue->ce_venue_name) . '"';?>/></td>
 						</tr>
 						<tr>
 							<td>Venue Address</td>
@@ -1334,7 +1375,7 @@ class community_events_plugin {
 						<table>
 						<tr>
 						<td class='required' style='width: 30%'>Event Name</td>
-						<td><input style="width:100%" type="text" id="event_name" name="event_name" onKeyPress='return disableEnterKey(event)' <?php if ($mode == "edit") echo "value='" . stripslashes($selectedevent->event_name) . "'";?>/></td>
+						<td><input style="width:100%" type="text" id="event_name" name="event_name" onKeyPress='return disableEnterKey(event)' <?php if ($mode == "edit") echo 'value="' . stripslashes($selectedevent->event_name) . '"';?>/></td>
 						</tr>
 						<tr>
 						<td>Category</td>
@@ -1390,7 +1431,11 @@ class community_events_plugin {
 							<select name="event_start_hour" style="width: 50px">
 								<?php for ($i = 1; $i <= 12; $i++)
 									  {
-											echo "<option value=" . $i . ">" . $i . "</option>\n";
+											echo "<option value=" . $i;
+											
+											if ($i == $selectedevent->event_start_hour) echo " selected";
+											
+											echo ">" . $i . "</option>\n";
 									  }
 								?>
 							</select>
@@ -1399,7 +1444,11 @@ class community_events_plugin {
 								<?php $minutes = array('00', '15', '30', '45');
 									  foreach ($minutes as $minute)
 									  {
-											echo "<option value=" . $minute . ">" . $minute . "</option>\n";
+											echo "<option value=" . $minute;
+											
+											if ($minute == $selectedevent->event_start_minute) echo " selected";
+											
+											echo ">" . $minute . "</option>\n";
 									  }
 								?>
 							</select>
@@ -1536,6 +1585,12 @@ class community_events_plugin {
 		echo "<style id='CommunityEventsStyle' type='text/css'>\n";
 		echo stripslashes($options['fullstylesheet']);
 		echo "</style>\n";
+		
+		if ($options['publishfeed'] == true)
+		{
+			$feedtitle = ($options['rssfeedtitle'] == "" ? __('Community Events Calendar Feed', 'community-events') : $options['rssfeedtitle']);
+			echo '<link rel="alternate" type="application/rss+xml" title="' . wp_specialchars(stripslashes($feedtitle)) . '" href="' . $this->cepluginpath . 'rssfeed.php" />';
+		}
 	}
 
 	function ce_7day_func($atts) {
@@ -1653,8 +1708,21 @@ class community_events_plugin {
 			
 			$eventquery .= "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
 			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
-			$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) <= " . $dayofyear;
+
+			$eventquery .= "WHERE ((YEAR(event_start_date) = " . $year;
+			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $dayofyear . " ";
+			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $dayofyear . ") ";
+			
+			$eventquery .= "OR (YEAR(event_start_date) < " . $year;
 			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $dayofyear;
+			$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) >= " . $year . ") ";
+			
+			$eventquery .= "OR (YEAR(event_end_date) > " . $year . " ";
+			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $dayofyear . ") ";
+			
+			$eventquery .= "OR (YEAR(event_end_date) = " . $year;
+			$eventquery .= " and YEAR(DATE(event_start_date)) < " . $year;
+			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $dayofyear . ")) ";
 			
 			if ($moderateevents == 'true' || $moderateevents == "")
 				$eventquery .= " and event_published = 'Y' ";
@@ -1776,14 +1844,27 @@ class community_events_plugin {
 				
 				$eventquery .= "SELECT * , if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
 				$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
-				$eventquery .= "where YEAR(event_start_date) = " . $year;
-				$eventquery .= " AND DAYOFYEAR(DATE(event_start_date)) <= " . $calculatedday . " AND DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday;
+				
+				$eventquery .= "WHERE ((YEAR(event_start_date) = " . $year;
+				$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $calculatedday . " ";
+				$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday . ") ";
+				
+				$eventquery .= "OR (YEAR(event_start_date) < " . $year;
+				$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday;
+				$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) >= " . $year . ") ";
+				
+				$eventquery .= "OR (YEAR(event_end_date) > " . $year . " ";
+				$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $calculatedday . ") ";
+				
+				$eventquery .= "OR (YEAR(event_end_date) = " . $year;
+				$eventquery .= " and YEAR(DATE(event_start_date)) < " . $year;
+				$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday . ")) ";
 				
 				if ($moderateevents == 'true' || $moderateevents == "")
 					$eventquery .= " and event_published = 'Y' ";
 				
 				$eventquery .= " order by event_name"; 
-								
+				
 				$dayevents = $wpdb->get_results($eventquery, ARRAY_A);
 				
 				//echo "Day: " . $calculatedday . ", values are: " . print_r($dayevents);
@@ -2219,7 +2300,7 @@ class community_events_plugin {
 			}
 			
 			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) = " . $queryday . " ";
-			$eventquery .= " and event_end_date IS NULL ";
+			$eventquery .= " and (event_end_date IS NULL OR event_start_date = event_end_date)";
 			
 			if ($moderateevents == true)
 				$eventquery .= " and event_published = 'Y' ";
@@ -2255,23 +2336,26 @@ class community_events_plugin {
 			
 			$eventquery .= "((YEAR(event_start_date) = " . $queryyear;
 			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $queryday . " ";
-			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $queryday . ") ";
+			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $queryday . ") OR ";
 			
-			$eventquery .= "OR (YEAR(event_start_date) < " . $queryyear;
+			$eventquery .= " (YEAR(event_start_date) < " . $queryyear;
 			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $queryday;
-			$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) >= " . $queryyear . ") ";
+			$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) >= " . $queryyear . ") OR ";
 			
-			$eventquery .= "OR (YEAR(event_end_date) > " . $queryyear . " ";
-			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $queryday . ") ";
+			$eventquery .= " (YEAR(event_end_date) > " . $queryyear . " ";
+			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $queryday . ") OR "; 
 			
-			$eventquery .= "OR (YEAR(event_end_date) = " . $queryyear;
+			$eventquery .= " (YEAR(event_end_date) = " . $queryyear;
 			$eventquery .= " and YEAR(DATE(event_start_date)) < " . $queryyear;
 			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $queryday . ")) ";
 									
 			if ($moderateevents == true)
 				$eventquery .= " and event_published = 'Y' ";			
 				
+			$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
+				
 			$eventquery .= ") order by event_start_date, event_name";
+			//echo $eventquery;
 			$events = $wpdb->get_results($eventquery, ARRAY_A);
 			
 			$doy = 0;
