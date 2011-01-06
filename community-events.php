@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 1.0.3
+Version: 1.0.4
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -852,7 +852,7 @@ class community_events_plugin {
 		$start = ($page - 1) * 10;
 		$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events ";
 		
-		$eventquery .= "WHERE ((YEAR(event_start_date) = " . $currentyear . ") and DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " AND event_end_date IS NULL) ";
+		$eventquery .= "WHERE ((YEAR(event_start_date) = " . $currentyear . ") and DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " AND (event_end_date IS NULL or event_end_date = event_start_date)) ";
 		
 		$eventquery .= " OR ((YEAR(event_start_date) = " . $currentyear;
 		$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $currentday . " ";
@@ -1699,7 +1699,7 @@ class community_events_plugin {
 			$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
 			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 			$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $dayofyear;
-			$eventquery .= " and event_end_date IS NULL ";
+			$eventquery .= " and (event_end_date IS NULL OR event_start_date = event_end_date) ";
 			
 			if ($moderateevents == 'true' || $moderateevents == "")
 				$eventquery .= " and event_published = 'Y' ";
@@ -1726,6 +1726,8 @@ class community_events_plugin {
 			
 			if ($moderateevents == 'true' || $moderateevents == "")
 				$eventquery .= " and event_published = 'Y' ";
+				
+			$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
 			
 			$eventquery .= " order by event_name";
 			
@@ -1835,8 +1837,8 @@ class community_events_plugin {
 				$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
 				$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 				$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $calculatedday;
-				$eventquery .= " and event_end_date IS NULL ";
-				
+				$eventquery .= " and (event_end_date IS NULL OR event_start_date = event_end_date)";
+								
 				if ($moderateevents == 'true' || $moderateevents == "")
 					$eventquery .= " and event_published = 'Y' ";
 				
@@ -1862,6 +1864,8 @@ class community_events_plugin {
 				
 				if ($moderateevents == 'true' || $moderateevents == "")
 					$eventquery .= " and event_published = 'Y' ";
+					
+				$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
 				
 				$eventquery .= " order by event_name"; 
 				
