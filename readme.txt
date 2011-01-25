@@ -3,14 +3,14 @@ Contributors: jackdewey
 Donate link: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events/
 Tags: events, list, AJAX
 Requires at least: 3.0
-Tested up to: 3.0
+Tested up to: 3.1
 Stable tag: trunk
 
-The purpose of this plugin is to allow users to create a schedule of upcoming events and display events for the next 7 days in an AJAX-driven box or displaying a full list of upcoming events. *WORK-IN-PROGRESS*
+The purpose of this plugin is to allow users to create a schedule of upcoming events and display events for the next 7 days in an AJAX-driven box or displaying a full list of upcoming events.
 
 == Description ==
 
-The purpose of this plugin is to allow users to create a schedule of upcoming events and display events for the next 7 days in an AJAX-driven box or displaying a full list of upcoming events. *WORK-IN-PROGRESS*
+The purpose of this plugin is to allow users to create a schedule of upcoming events and display events for the next 7 days in an AJAX-driven box or displaying a full list of upcoming events.
 
 == Installation ==
 
@@ -103,4 +103,6 @@ There are no FAQs at this time.
 
 == Screenshots ==
 
-There are no screenshots at this time.
+1. 7-day Outlook Event Calendar
+2. Full Listing Event Calendar
+3. User event submission form
