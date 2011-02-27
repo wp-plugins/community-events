@@ -24,6 +24,12 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.1 =
+* Added edit capability for users to edit events that they submitted
+* Added counter for number of times an event link is clicked
+* Split Full Schedule event listing onto two rows
+* Other minor bug corrections
+
 = 1.0.4 =
 * Fixed problems with events not showing up if they were assigned an end date that is the same as the start date
 

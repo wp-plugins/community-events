@@ -12,6 +12,8 @@
 
 .even { border-left: none !important; background-color: #a0c1c6 !important; }
 
+.odd { border-left: none !important; background-color: #000000 !important; }
+
 .ce-7day-toptable { border: 1px solid #CCC !important; padding: 0px !important; }
 
 .ce-7day-innertable { background-color: #fff; }
