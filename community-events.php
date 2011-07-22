@@ -855,17 +855,22 @@ class community_events_plugin {
 	function print_event_table($currentyear, $currentday, $page, $moderate = false) {
 		global $wpdb;
 	
-		$countquery = "SELECT COUNT(*) from " . $wpdb->prefix . "ce_events where YEAR(event_start_date) = " . $currentyear . " and ( DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " OR DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ") ";
+		$countquery = "SELECT COUNT(*) from " . $wpdb->prefix . "ce_events where ";
 		
 		if ($moderate == true)
-			$countquery .= " AND event_published = 'N' ";
+			$countquery .= " event_published = 'N' AND ";
+		
+		$countquery .= "YEAR(event_start_date) = " . $currentyear . " and ( DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " OR DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ") ";
 			
 		$count = $wpdb->get_var($countquery);	
 		
 		$start = ($page - 1) * 10;
-		$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events ";
+		$eventquery = "SELECT * from " . $wpdb->prefix . "ce_events WHERE ";
 		
-		$eventquery .= "WHERE ((YEAR(event_start_date) = " . $currentyear . ") and DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " AND (event_end_date IS NULL or event_end_date = event_start_date)) ";
+		if ($moderate == true)
+			$eventquery .= " event_published = 'N' AND ";
+		
+		$eventquery .= " ((YEAR(event_start_date) = " . $currentyear . ") and DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " AND (event_end_date IS NULL or event_end_date = event_start_date)) ";
 		
 		$eventquery .= " OR ((YEAR(event_start_date) = " . $currentyear;
 		$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $currentday . " ";
@@ -882,9 +887,6 @@ class community_events_plugin {
 		$eventquery .= "OR (YEAR(event_end_date) = " . $currentyear;
 		$eventquery .= " and YEAR(DATE(event_start_date)) < " . $currentyear;
 		$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ")) ";
-		
-		if ($moderate == true)
-			$eventquery .= " AND event_published = 'N' ";
 		
 		$eventquery .= " ORDER by event_start_date, event_name LIMIT " . $start . ", 10";
 		
@@ -1241,7 +1243,7 @@ class community_events_plugin {
 					</table>
 					<input type="hidden" name="ce_venue_id" value="<?php if ($mode == "edit") echo $selectedvenue->ce_venue_id; ?>" />
 				</td>
-				<td style='width=55%; vertical-align: top;'>
+				<td style='width:55%; vertical-align: top;'>
 					<?php $venues = $wpdb->get_results("SELECT count( e.event_id ) AS nbitems, v.ce_venue_id, v.ce_venue_name FROM " . $wpdb->prefix . "ce_venues v LEFT JOIN " . $wpdb->prefix . "ce_events e ON e.event_venue = v.ce_venue_id GROUP BY v.ce_venue_id ORDER by v.ce_venue_name");
 
 					if ($venues): ?>
@@ -1493,7 +1495,7 @@ class community_events_plugin {
 						<tr>
 						</table>
 					</td>
-					<td style='width=55%; vertical-align: top'>
+					<td style='width:55%; vertical-align: top'>
 						<span class='button'><a href='#' onclick='normalmode()'><?php _e('Event Management', 'community-events'); ?></a></span> <span class='button'><a href='#' id='moderate' onclick='moderatemode()'><?php _e('Moderation', 'community-events'); ?></a></span> <span class='button'><a href='#' id='approveselected' onclick='approveselected()'><?php _e('Approve Selected', 'community-events'); ?></a></span><br /><br />
 						<?php 
 						$currentday = date("z", current_time('timestamp')) + 1;

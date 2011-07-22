@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.1.1 =
+* Corrected problem with moderation mode not displaying links to be moderated in admin
+
 = 1.1 =
 * Added edit capability for users to edit events that they submitted
 * Added counter for number of times an event link is clicked
