@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 1.1.1
+Version: 1.1.2
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -1026,7 +1026,7 @@ class community_events_plugin {
 						</tr>
 						<tr>
 							<td style='width:200px'><?php _e('Wait for validation before displaying user events', 'community-events'); ?></td>
-							<td style='width:75px;padding-right:20px'><input type="checkbox" id="moderateevents" name="moderateevents" <?php if ($options['moderateevents'] == true || $options['moderateevents'] == '') echo ' checked="checked" '; ?>/></td>							
+							<td style='width:75px;padding-right:20px'><input type="checkbox" id="moderateevents" name="moderateevents" <?php if ($options['moderateevents'] === true) echo ' checked="checked" '; ?>/></td>							
 							<td style='width: 20px'></td>
 							<td style='width:200px'><?php _e('Display captcha', 'community-events'); ?></td>
 							<td style='width:75px;padding-right:20px'><input type="checkbox" id="captchaevents" name="captchaevents" <?php if ($options['captchaevents']) echo ' checked="checked" '; ?>/></td>							
@@ -1645,7 +1645,7 @@ class community_events_plugin {
 			$eventquery .= "    or (event_description like '%" . $searchstring . "%')";
 			$eventquery .= ")";
 			
-			if ($moderateevents == 'true' || $moderateevents == "")
+			if ($moderateevents == 'true')
 				$eventquery .= " and event_published = 'Y' ";
 				
 			$eventquery .= " order by event_start_date";
@@ -1734,7 +1734,7 @@ class community_events_plugin {
 			$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $dayofyear;
 			$eventquery .= " and (event_end_date IS NULL OR event_start_date = event_end_date) ";
 			
-			if ($moderateevents == 'true' || $moderateevents == "")
+			if ($moderateevents == 'true')
 				$eventquery .= " and event_published = 'Y' ";
 				
 			$eventquery .= "UNION ";
@@ -1757,7 +1757,7 @@ class community_events_plugin {
 			$eventquery .= " and YEAR(DATE(event_start_date)) < " . $year;
 			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $dayofyear . ")) ";
 			
-			if ($moderateevents == 'true' || $moderateevents == "")
+			if ($moderateevents == 'true')
 				$eventquery .= " and event_published = 'Y' ";
 				
 			$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
@@ -1886,7 +1886,7 @@ class community_events_plugin {
 				$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $calculatedday;
 				$eventquery .= " and (event_end_date IS NULL OR event_start_date = event_end_date)";
 								
-				if ($moderateevents == 'true' || $moderateevents == "")
+				if ($moderateevents == 'true')
 					$eventquery .= " and event_published = 'Y' ";
 				
 				$eventquery .= "UNION ";
@@ -1909,7 +1909,7 @@ class community_events_plugin {
 				$eventquery .= " and YEAR(DATE(event_start_date)) < " . $year;
 				$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday . ")) ";
 				
-				if ($moderateevents == 'true' || $moderateevents == "")
+				if ($moderateevents == 'true')
 					$eventquery .= " and event_published = 'Y' ";
 					
 				$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
@@ -2796,7 +2796,7 @@ class community_events_plugin {
 						$newevent['event_end_date'] = date( 'Y-m-d', strtotime( $newevent['event_end_date']) );
 					}	
 						
-					if (isset($_POST['submiteventnew']) && ($options['moderateevents'] == true || $options['moderateevents'] == ''))
+					if (isset($_POST['submiteventnew']) && ($options['moderateevents'] == true))
 						$newevent['event_published'] = 'N';
 					elseif (isset($_POST['submiteventnew']) && $options['moderateevents'] == false)
 						$newevent['event_published'] = 'Y';

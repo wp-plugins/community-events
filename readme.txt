@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.1.2 =
+* Fixed problem where moderation setting could not be unchecked
+
 = 1.1.1 =
 * Corrected problem with moderation mode not displaying links to be moderated in admin
 
