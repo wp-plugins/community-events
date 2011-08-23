@@ -12,6 +12,6 @@
 	$options = get_option('CE_PP');
     
 	echo $my_community_events_plugin->eventlist($year, $_GET['dayofyear'], $outlook, $showdate, $maxevents, $moderateevents, $searchstring, $options['fullscheduleurl'],
-		 $options['addeventurl'], $options['allowuserediting']);
+		 $options['addeventurl'], $options['allowuserediting'], $options['displayendtimefield']);
 	
 ?>

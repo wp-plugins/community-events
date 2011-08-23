@@ -24,6 +24,11 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.2 =
+* Added option to allow users to submit new venues by selecting last entry in venue list
+* Added option to display and accept event end time
+* Replaced calls to wp_specialchars with esc_html
+
 = 1.1.2 =
 * Fixed problem where moderation setting could not be unchecked
 

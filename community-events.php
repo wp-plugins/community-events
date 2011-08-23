@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 1.1.2
+Version: 1.2
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -137,6 +137,16 @@ class community_events_plugin {
 			$options['rssfeedtargetaddress'] = '';
 			$options['allowuserediting'] = false;
 			$options['updateeventbtnlabel'] = __('Update Event', 'community-events');
+			$options['newvenuenamelabel'] = __('New Venue Name', 'community-events');
+			$options['newvenueaddresslabel'] = __('New Venue Address', 'community-events');
+			$options['newvenuecitylabel'] = __('New Venue City', 'community-events');
+			$options['newvenuezipcodelabel'] = __('New Venue Zip Code', 'community-events');
+			$options['newvenuephonelabel'] = __('New Venue Phone', 'community-events');
+			$options['newvenueemaillabel'] = __('New Venue E-mail', 'community-events');
+			$options['newvenueurllabel'] = __('New Venue URL', 'community-events');
+			$options['allowuservenuesubmissions'] = false;
+			$options['displayendtimefield'] = false;
+			$options['eventendtimelabel'] = __('Event End Time', 'community-events');
 			
 			$stylesheetlocation = CEDIR . '/stylesheettemplate.css';
 			if (file_exists($stylesheetlocation))
@@ -232,6 +242,14 @@ class community_events_plugin {
 				update_option('CE_PP',$options);
 				
 				$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` ADD `event_click_count` INT(11) NULL AFTER `event_submitter`;");
+			}
+			
+			if ($options['schemaversion'] < 1.2)
+			{
+				$options['schemaversion'] = 1.2;
+				update_option('CE_PP',$options);
+				
+				$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` ADD `event_end_hour` INT(11) NULL AFTER `event_click_count`, ADD `event_end_minute` INT(2) UNSIGNED ZEROFILL NULL AFTER `event_end_hour`, ADD `event_end_ampm` VARCHAR(2) NULL AFTER `event_end_minute`;");				
 			}
 			
 			if ($options['fullvieweventsperpage'] == '')
@@ -531,17 +549,22 @@ class community_events_plugin {
 		
 		$options = get_option('CE_PP');
 		
-		foreach (array('fullscheduleurl', 'addeventurl', 'columns', 'addneweventmsg', 'eventnamelabel', 'eventcatlabel', 'eventvenuelabel', 'eventdesclabel',
-						'eventaddrlabel', 'eventticketaddrlabel', 'eventdatelabel', 'eventtimelabel', 'addeventbtnlabel', 'eventenddatelabel',
-						'maxevents7dayview', 'fullviewmaxdays', 'fullvieweventsperpage', 'rssfeedtitle', 'rssfeeddescription', 'rssfeedtargetaddress',
-						'updateeventbtnlabel') as $option_name) {
+		foreach (array('fullscheduleurl', 'addeventurl', 'columns', 'addneweventmsg',
+						'eventnamelabel', 'eventcatlabel', 'eventvenuelabel', 'eventdesclabel',
+						'eventaddrlabel', 'eventticketaddrlabel', 'eventdatelabel', 'eventtimelabel',
+						'addeventbtnlabel', 'eventenddatelabel', 'maxevents7dayview', 'fullviewmaxdays',
+						'fullvieweventsperpage', 'rssfeedtitle', 'rssfeeddescription', 'rssfeedtargetaddress',
+						'updateeventbtnlabel', 'newvenuenamelabel', 'newvenueaddresslabel',
+						'newvenuecitylabel', 'newvenuezipcodelabel', 'newvenuephonelabel',
+						'newvenueemaillabel', 'newvenueurllabel', 'eventendtimelabel') as $option_name) {
 				if (isset($_POST[$option_name])) {
 					$options[$option_name] = $_POST[$option_name];
 				}
 			}
 			
 		foreach (array('adjusttooltipposition', 'addeventreqlogin', 'outlook', 'emailnewevent', 'moderateevents', 'captchaevents', 'storelinksubmitter',
-						'outlookdefault', 'displaysearch', 'publishfeed', 'allowuserediting') as $option_name) {
+						'outlookdefault', 'displaysearch', 'publishfeed', 'allowuserediting',
+					'allowuservenuesubmissions', 'displayendtimefield') as $option_name) {
 			if (isset($_POST[$option_name])) {
 				$options[$option_name] = true;
 			} else {
@@ -639,13 +662,13 @@ class community_events_plugin {
 							if (!$existingvenue)
 							{
 								$venuetablename = $wpdb->prefix . "ce_venues";
-								$newvenue = array("ce_venue_name" => wp_specialchars(stripslashes($data[0])), 
-											"ce_venue_address" => wp_specialchars(stripslashes($data[1])),
-											"ce_venue_city" => wp_specialchars(stripslashes($data[2])),
-											"ce_venue_zipcode" => wp_specialchars(stripslashes($data[3])),
-											"ce_venue_phone" => wp_specialchars(stripslashes($data[4])),
-											"ce_venue_email" => wp_specialchars(stripslashes($data[5])),
-											"ce_venue_url" =>wp_specialchars(stripslashes($data[6])));
+								$newvenue = array("ce_venue_name" => esc_html(stripslashes($data[0])), 
+											"ce_venue_address" => esc_html(stripslashes($data[1])),
+											"ce_venue_city" => esc_html(stripslashes($data[2])),
+											"ce_venue_zipcode" => esc_html(stripslashes($data[3])),
+											"ce_venue_phone" => esc_html(stripslashes($data[4])),
+											"ce_venue_email" => esc_html(stripslashes($data[5])),
+											"ce_venue_url" =>esc_html(stripslashes($data[6])));
 											
 								$returncode = $wpdb->insert( $venuetablename, $newvenue);
 								
@@ -748,7 +771,10 @@ class community_events_plugin {
 								 "event_category" => $_POST['event_category'],
 								 "event_venue" => $_POST['event_venue'],
 								 "event_published" => 'Y',
-								 "event_submitter" => $username);
+								 "event_submitter" => $username,
+								 "event_end_hour" => $_POST['event_end_hour'],
+								 "event_end_minute" => $_POST['event_end_minute'],
+								 "event_end_ampm" => $_POST['event_end_ampm']);
 								 
 				if ($_POST['event_end_date'] != '')
 					$newevent['event_end_date'] = $_POST['event_end_date'];
@@ -996,6 +1022,9 @@ class community_events_plugin {
 			<tr>
 				<td><?php _e('Show search box in 7-day view', 'community-events'); ?></td>
 				<td><input type="checkbox" id="displaysearch" name="displaysearch" <?php if ($options['displaysearch']) echo ' checked="checked" '; ?>/></td>
+				<td style='width: 100px'></td>
+				<td><?php _e('Display Fields to enter event end time', 'community-events'); ?></td>
+				<td><input type="checkbox" id="displayendtimefield" name="displayendtimefield" <?php if ($options['displayendtimefield']) echo ' checked="checked" '; ?>/></td>
 			</tr>
 			<tr>
 				<td><?php _e('Number of events per page in Full View', 'community-events'); ?></td>
@@ -1084,6 +1113,11 @@ class community_events_plugin {
 							<td><input type="text" id="eventtimelabel" name="eventtimelabel" size="30" value="<?php echo $options['eventtimelabel']; ?>"/></td>
 						</tr>
 						<tr>
+							<td style='width:200px'><?php _e('Event End Time Label', 'community-events'); ?></td>
+							<?php if ($options['eventendtimelabel'] == "") $options['eventendtimelabel'] = __('Event End Time', 'community-events'); ?>
+							<td><input type="text" id="eventendtimelabel" name="eventendtimelabel" size="30" value="<?php echo $options['eventendtimelabel']; ?>"/></td>
+						</tr>
+						<tr>
 							<td style='width:200px'><?php _e('Add Event Button Label', 'community-events'); ?></td>
 							<?php if ($options['addeventbtnlabel'] == "") $options['addeventbtnlabel'] = __('Add Event', 'community-events'); ?>
 							<td><input type="text" id="addeventbtnlabel" name="addeventbtnlabel" size="30" value="<?php echo $options['addeventbtnlabel']; ?>"/></td>
@@ -1092,8 +1126,44 @@ class community_events_plugin {
 							<?php if ($options['updateeventbtnlabel'] == "") $options['updateeventbtnlabel'] = __('Update Event', 'community-events'); ?>
 							<td><input type="text" id="updateeventbtnlabel" name="updateeventbtnlabel" size="30" value="<?php echo $options['updateeventbtnlabel']; ?>"/></td>
 						</tr>
+						<tr>
+							<td style='width:200px'><?php _e('Allow users to submit new venues', 'community-events'); ?></td>
+							<td style='width:75px;padding-right:20px'><input type="checkbox" id="allowuservenuesubmissions" name="allowuservenuesubmissions" <?php if ($options['allowuservenuesubmissions'] === true) echo ' checked="checked" '; ?>/></td>
+						</tr>
+						<tr>
+							<td style='width:200px'><?php _e('New Venue Name Label', 'community-events'); ?></td>
+							<?php if ($options['newvenuenamelabel'] == "") $options['newvenuenamelabel'] = __('New Venue Name', 'community-events'); ?>
+							<td><input type="text" id="newvenuenamelabel" name="newvenuenamelabel" size="30" value="<?php echo $options['newvenuenamelabel']; ?>"/></td>
+							<td style='width:200px'></td>
+							<td style='width:200px'><?php _e('New Venue Address Label', 'community-events'); ?></td>
+							<?php if ($options['newvenueaddresslabel'] == "") $options['newvenueaddresslabel'] = __('New Venue Address', 'community-events'); ?>
+							<td><input type="text" id="newvenueaddresslabel" name="newvenueaddresslabel" size="30" value="<?php echo $options['newvenueaddresslabel']; ?>"/></td>
+						</tr>
+						<tr>
+							<td style='width:200px'><?php _e('New Venue City Label', 'community-events'); ?></td>
+							<?php if ($options['newvenuecitylabel'] == "") $options['newvenuecitylabel'] = __('New Venue City', 'community-events'); ?>
+							<td><input type="text" id="newvenuecitylabel" name="newvenuecitylabel" size="30" value="<?php echo $options['newvenuecitylabel']; ?>"/></td>
+							<td style='width:200px'></td>
+							<td style='width:200px'><?php _e('New Venue Zip Code Label', 'community-events'); ?></td>
+							<?php if ($options['newvenuezipcodelabel'] == "") $options['newvenuezipcodelabel'] = __('New Venue Zip Code', 'community-events'); ?>
+							<td><input type="text" id="newvenuezipcodelabel" name="newvenuezipcodelabel" size="30" value="<?php echo $options['newvenuezipcodelabel']; ?>"/></td>
+						</tr>
+						<tr>
+							<td style='width:200px'><?php _e('New Venue Phone Label', 'community-events'); ?></td>
+							<?php if ($options['newvenuephonelabel'] == "") $options['newvenuephonelabel'] = __('New Venue Phone', 'community-events'); ?>
+							<td><input type="text" id="newvenuephonelabel" name="newvenuephonelabel" size="30" value="<?php echo $options['newvenuephonelabel']; ?>"/></td>
+							<td style='width:200px'></td>
+							<td style='width:200px'><?php _e('New Venue E-mail Label', 'community-events'); ?></td>
+							<?php if ($options['newvenueemaillabel'] == "") $options['newvenueemaillabel'] = __('New Venue E-mail', 'community-events'); ?>
+							<td><input type="text" id="newvenueemaillabel" name="newvenueemaillabel" size="30" value="<?php echo $options['newvenueemaillabel']; ?>"/></td>
+						</tr>
+						<tr>
+							<td style='width:200px'><?php _e('New Venue URL Label', 'community-events'); ?></td>
+							<?php if ($options['newvenuenewvenueurllabelnamelabel'] == "") $options['newvenueurllabel'] = __('New Venue URL', 'community-events'); ?>
+							<td><input type="text" id="newvenueurllabel" name="newvenueurllabel" size="30" value="<?php echo $options['newvenueurllabel']; ?>"/></td>
+						</tr>
 					</table>
-
+	
 	<?php }
 	
 	function general_user_rssgen_box($data) {
@@ -1320,6 +1390,7 @@ class community_events_plugin {
 	function events_meta_box($data) {
 		$mode = $data['mode'];
 		$selectedevent = $data['selectedevent'];
+		$options = $data['options'];
 
 		$currentday = date("z", current_time('timestamp')) + 1;
 		if (date("L") == 1 && $currentday > 60)
@@ -1448,7 +1519,11 @@ class community_events_plugin {
 							<td><input type="text" id="datepickerstart" name="event_start_date" size="26" onKeyPress='return disableEnterKey(event)' <?php if ($mode == "edit") echo "value='" . $selectedevent->event_start_date . "'"; else echo "value='" . date('m-d-Y', current_time('timestamp')) . "'"; ?>/></td>
 						</tr>
 						<tr>
+						<?php if ($options['displayendtimefield'] != true): ?>
 						<td>Time</td>
+						<?php else: ?>
+						<td>Start Time</td>
+						<?php endif; ?>
 						<td>
 							<select name="event_start_hour" style="width: 50px">
 								<?php for ($i = 1; $i <= 12; $i++)
@@ -1475,11 +1550,46 @@ class community_events_plugin {
 								?>
 							</select>
 							<select name="event_start_ampm" style="width: 50px">
-								<option value="AM">AM</option>
-								<option value="PM">PM</option>
+								<option value="AM" <?php if ($selectedevent->event_start_ampm == 'AM') echo "selected='selected'"; ?>>AM</option>
+								<option value="PM" <?php if ($selectedevent->event_start_ampm == 'PM') echo "selected='selected'"; ?>>PM</option>
 							</select>						
 						</td>
 						</tr>
+						<?php if ($options['displayendtimefield'] == true): ?>
+						<tr>
+						<td>End Time</td>
+						<td>
+							<select name="event_end_hour" style="width: 50px">
+								<?php for ($i = 1; $i <= 12; $i++)
+									  {
+											echo "<option value=" . $i;
+											
+											if ($i == $selectedevent->event_end_hour) echo " selected";
+											
+											echo ">" . $i . "</option>\n";
+									  }
+								?>
+							</select>
+							:
+							<select name="event_end_minute" style="width: 50px">
+								<?php $minutes = array('00', '15', '30', '45');
+									  foreach ($minutes as $minute)
+									  {
+											echo "<option value=" . $minute;
+											
+											if ($minute == $selectedevent->event_end_minute) echo " selected";
+											
+											echo ">" . $minute . "</option>\n";
+									  }
+								?>
+							</select>
+							<select name="event_end_ampm" style="width: 50px">
+								<option value="AM" <?php if ($selectedevent->event_end_ampm == 'AM') echo "selected='selected'"; ?>>AM</option>
+								<option value="PM" <?php if ($selectedevent->event_end_ampm == 'PM') echo "selected='selected'"; ?>>PM</option>
+							</select>						
+						</td>
+						</tr>
+						<?php endif; ?>						
 						<tr>
 						<td>End Date</td>
 						<td><input type="text" id="datepickerend" name="event_end_date" size="26" onKeyPress='return disableEnterKey(event)' <?php if ($mode == "edit") echo "value='" . $selectedevent->event_end_date . "'"; ?>/></td>
@@ -1615,7 +1725,7 @@ class community_events_plugin {
 		if ($options['publishfeed'] == true)
 		{
 			$feedtitle = ($options['rssfeedtitle'] == "" ? __('Community Events Calendar Feed', 'community-events') : $options['rssfeedtitle']);
-			echo '<link rel="alternate" type="application/rss+xml" title="' . wp_specialchars(stripslashes($feedtitle)) . '" href="' . $this->cepluginpath . 'rssfeed.php" />';
+			echo '<link rel="alternate" type="application/rss+xml" title="' . esc_html(stripslashes($feedtitle)) . '" href="' . $this->cepluginpath . 'rssfeed.php" />';
 		}
 	}
 
@@ -1626,11 +1736,11 @@ class community_events_plugin {
 		$options = get_option('CE_PP');
 		
 		return $this->ce_7day($options['fullscheduleurl'], $options['outlook'], $options['addeventurl'], $options['maxevents7dayview'], $options['moderateevents'],
-							  $options['displaysearch'], $options['outlookdefault'], $options['allowuserediting']);
+							  $options['displaysearch'], $options['outlookdefault'], $options['allowuserediting'], $options['displayendtimefield']);
 	}
 
 	function eventlist ($year, $dayofyear, $outlook = 'true', $showdate = 'false', $maxevents = 5, $moderateevents = 'false', $searchstring = '', $fullscheduleurl = '',
-						$addeventurl = '', $allowuserediting = false) {
+						$addeventurl = '', $allowuserediting = false, $displayendtimefield = false) {
 
 		global $wpdb;
 		
@@ -1638,7 +1748,7 @@ class community_events_plugin {
 		
 		if ($searchstring != '')
 		{
-			$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
+			$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
 			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 			$eventquery .= "where ((event_name like '%" . $searchstring . "%')";
 			$eventquery .= "    or (ce_venue_name like '%" . $searchstring . "%')";
@@ -1650,8 +1760,8 @@ class community_events_plugin {
 				
 			$eventquery .= " order by event_start_date";
 						
-			$events = $wpdb->get_results($eventquery, ARRAY_A);   
-			
+			$events = $wpdb->get_results($eventquery, ARRAY_A);  
+						
 			if ($events)
 			{
 				foreach($events as $event)
@@ -1693,7 +1803,14 @@ class community_events_plugin {
 
 					$output .= "</span> ";
 					
-					$output .= "<span class='ce-event-time'>" . $event['event_start_hour'] . ":" . $event['event_start_minute_zeros'] . " " . $event['event_start_ampm'] . "</span> ";
+					$output .= "<span class='ce-event-time'>" . $event['event_start_hour'] . ":" . $event['event_start_minute_zeros'] . " " . $event['event_start_ampm'];
+					
+					if ($displayendtimefield == true)
+					{
+						$output .= " - " . $event['event_end_hour'] . ":" . $event['event_end_minute_zeros'] . " " . $event['event_end_ampm'];
+					}
+					
+					$output .= "</span> ";
 						
 					if ($event['ce_venue_name'] != "")
 					{
@@ -1729,7 +1846,7 @@ class community_events_plugin {
 		}
 		elseif ($outlook == 'false')
 		{			
-			$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
+			$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
 			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 			$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $dayofyear;
 			$eventquery .= " and (event_end_date IS NULL OR event_start_date = event_end_date) ";
@@ -1739,7 +1856,7 @@ class community_events_plugin {
 				
 			$eventquery .= "UNION ";
 			
-			$eventquery .= "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
+			$eventquery .= "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
 			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 
 			$eventquery .= "WHERE ((YEAR(event_start_date) = " . $year;
@@ -1819,7 +1936,14 @@ class community_events_plugin {
 					$output .= "</span> ";
 					
 					$output .= "<span class='ce-event-time'>" . $events[$randomevent]['event_start_hour'] . ":";
-					$output .= $events[$randomevent]['event_start_minute_zeros'] . " " . $events[$randomevent]['event_start_ampm'] ."</span> ";
+					$output .= $events[$randomevent]['event_start_minute_zeros'] . " " . $events[$randomevent]['event_start_ampm'];
+					
+					if ($displayendtimefield == true)
+					{
+						$output .= " - " . $events[$randomevent]['event_end_hour'] . ":" . $events[$randomevent]['event_end_minute_zeros'] . " " . $events[$randomevent]['event_end_ampm'];
+					}
+					
+					$output .= "</span> ";
 						
 					if ($events[$randomevent]['ce_venue_name'] != "")
 					{
@@ -1881,7 +2005,7 @@ class community_events_plugin {
 			{		
 				$calculatedday = $dayofyear + $i;
 			
-				$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
+				$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
 				$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 				$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $calculatedday;
 				$eventquery .= " and (event_end_date IS NULL OR event_start_date = event_end_date)";
@@ -1891,7 +2015,7 @@ class community_events_plugin {
 				
 				$eventquery .= "UNION ";
 				
-				$eventquery .= "SELECT * , if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros` from ";
+				$eventquery .= "SELECT * , if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
 				$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 				
 				$eventquery .= "WHERE ((YEAR(event_start_date) = " . $year;
@@ -1966,11 +2090,18 @@ class community_events_plugin {
 					$output .= "</span> ";
 					
 					$output .= "<span class='ce-event-time'>" . $dayevents[$randomentry]['event_start_hour'] . ":";
-					$output .= $dayevents[$randomentry]['event_start_minute_zeros'] . " " . $dayevents[$randomentry]['event_start_ampm'] . "</span> ";
+					$output .= $dayevents[$randomentry]['event_start_minute_zeros'] . " " . $dayevents[$randomentry]['event_start_ampm'];
+					
+					if ($displayendtimefield == true)
+					{
+						$output .= " - " . $dayevents[$randomentry]['event_end_hour'] . ":" . $dayevents[$randomentry]['event_end_minute_zeros'] . " " . $dayevents[$randomentry]['event_end_ampm'];
+					}
+					
+					$output .= "</span> ";
 						
 					if ($dayevents[$randomentry]['ce_venue_name'] != "")
 					{
-						$output .= '<span class="cetooltip ce-venue-name" title="<strong>' . wp_specialchars(stripslashes($dayevents[$randomentry]['ce_venue_name'])) . '</strong><br />' . stripslashes($dayevents[$randomentry]['ce_venue_address'])  . '<br />' . stripslashes($dayevents[$randomentry]['ce_venue_city']) . '<br />' . $dayevents[$randomentry]['ce_venue_zipcode'] . '<br />' . $dayevents[$randomentry]['ce_venue_email'] . '<br />' . $dayevents[$randomentry]['ce_venue_phone'] . '<br />' .  $dayevents[$randomentry]['ce_venue_url'] . '">';
+						$output .= '<span class="cetooltip ce-venue-name" title="<strong>' . esc_html(stripslashes($dayevents[$randomentry]['ce_venue_name'])) . '</strong><br />' . stripslashes($dayevents[$randomentry]['ce_venue_address'])  . '<br />' . stripslashes($dayevents[$randomentry]['ce_venue_city']) . '<br />' . $dayevents[$randomentry]['ce_venue_zipcode'] . '<br />' . $dayevents[$randomentry]['ce_venue_email'] . '<br />' . $dayevents[$randomentry]['ce_venue_phone'] . '<br />' .  $dayevents[$randomentry]['ce_venue_url'] . '">';
 						
 						if ($fullscheduleurl != '')
 							$output .= "<a href='" . $fullscheduleurl . "?venueset=1&amp;venue=" . $dayevents[$randomentry]['ce_venue_id'] . "'>\n";
@@ -2028,7 +2159,7 @@ class community_events_plugin {
 	}
 		
 	function ce_7day($fullscheduleurl = '', $outlook = true, $addeventurl = '', $maxevents = 5, $moderateevents = true, $displaysearch = true, $outlookdefault = false,
-					 $allowuserediting = false) {
+					 $allowuserediting = false, $displayendtimefield = false) {
 		global $wpdb;
 		
 		$currentday = date("z", current_time('timestamp')) + 1;
@@ -2098,7 +2229,7 @@ class community_events_plugin {
 
 		$output .= "</tr>\n\t<tr><td class='ce-inner-table-row' colspan='" . (($outlook == true) ? 8 : 7) . "'>\n";
 		
-		$output .= $this->eventlist($currentyear, $currentday, (($outlook == true && $outlookdefault == true)? 'true' : 'false'), 'false', $maxevents, ($moderateevents == true ? "true" : "false"), '', $fullscheduleurl, $addeventurl, $allowuserediting);
+		$output .= $this->eventlist($currentyear, $currentday, (($outlook == true && $outlookdefault == true)? 'true' : 'false'), 'false', $maxevents, ($moderateevents == true ? "true" : "false"), '', $fullscheduleurl, $addeventurl, $allowuserediting, $displayendtimefield);
 
 		$output .= "\t</td></tr>\n";
 		
@@ -2165,10 +2296,10 @@ class community_events_plugin {
 		if ($options['schemaversion'] < 0.3)
 			$this->ce_install();
 		
-		return $this->ce_full($options['moderateevents'], $options['fullvieweventsperpage'], $options['fullviewmaxdays'], $options['fullscheduleurl'], $options['addeventurl'], $options['allowuserediting']);
+		return $this->ce_full($options['moderateevents'], $options['fullvieweventsperpage'], $options['fullviewmaxdays'], $options['fullscheduleurl'], $options['addeventurl'], $options['allowuserediting'], $options['displayendtimefield']);
 	}
 
-	function ce_full($moderateevents = true, $fullvieweventsperpage = 20, $fullviewmaxdays = 90, $fullscheduleurl = '', $addeventurl = '', $allowuserediting = false) {
+	function ce_full($moderateevents = true, $fullvieweventsperpage = 20, $fullviewmaxdays = 90, $fullscheduleurl = '', $addeventurl = '', $allowuserediting = false, $displayendtimefield = false) {
 		global $wpdb;
 		
 		if ($fullviewmaxdays == '')
@@ -2342,7 +2473,7 @@ class community_events_plugin {
 		
 		while ($loopcount > 0)	
 		{			
-			$eventquery = "(SELECT *, if(char_length(event_start_minute)=1,concat('0',event_start_minute),event_start_minute) as event_start_minute_zeros, ";
+			$eventquery = "(SELECT *, if(char_length(event_start_minute)=1,concat('0',event_start_minute),event_start_minute) as event_start_minute_zeros, if(char_length(event_end_minute)=1,concat('0',event_end_minute),event_end_minute) as event_end_minute_zeros, ";
 			$eventquery .= "UNIX_TIMESTAMP(event_start_date) as datestamp, DAYOFYEAR(DATE(event_start_date)) as doy from " . $wpdb->prefix . "ce_events e LEFT JOIN ";
 			$eventquery .= $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 			$eventquery .= "where YEAR(event_start_date) = " . $queryyear;
@@ -2378,7 +2509,7 @@ class community_events_plugin {
 				
 			$eventquery .= ") UNION ";
 			
-			$eventquery .= "(SELECT *, if(char_length(event_start_minute)=1,concat('0',event_start_minute),event_start_minute) as event_start_minute_zeros, ";
+			$eventquery .= "(SELECT *, if(char_length(event_start_minute)=1,concat('0',event_start_minute),event_start_minute) as event_start_minute_zeros, if(char_length(event_end_minute)=1,concat('0',event_end_minute),event_end_minute) as event_end_minute_zeros, ";
 			$eventquery .= "UNIX_TIMESTAMP(event_start_date) as datestamp, DAYOFYEAR(DATE(event_start_date)) as doy from " . $wpdb->prefix . "ce_events e LEFT JOIN ";
 			$eventquery .= $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id where ";
 			
@@ -2540,7 +2671,14 @@ class community_events_plugin {
 				}
 					
 				$output .= " <span class='ce-event-time'>" . $fullevent['event_start_hour'] . ":";
-				$output .= $fullevent['event_start_minute_zeros'] . " " . $fullevent['event_start_ampm'] . "</span> ";
+				$output .= $fullevent['event_start_minute_zeros'] . " " . $fullevent['event_start_ampm'];
+				
+				if ($displayendtimefield == true)
+				{
+					$output .= " - " . $fullevent['event_end_hour'] . ":" . $fullevent['event_end_minute_zeros'] . " " . $fullevent['event_end_ampm'];
+				}
+				
+				$output .= "</span> ";
 
 				$output .= "</td></tr><tr>";
 				
@@ -2752,6 +2890,16 @@ class community_events_plugin {
 				$captureddata['event_ticket_url'] = $_POST['event_ticket_url'];
 				$captureddata['event_venue'] = $_POST['event_venue'];
 				$captureddata['event_category'] = $_POST['event_category'];
+				$captureddata['new_venue_name'] = $_POST['new_venue_name'];
+				$captureddata['new_venue_address'] = $_POST['new_venue_address'];
+				$captureddata['new_venue_city'] = $_POST['new_venue_city'];
+				$captureddata['new_venue_zipcode'] = $_POST['new_venue_zipcode'];
+				$captureddata['new_venue_phone'] = $_POST['new_venue_phone'];
+				$captureddata['new_venue_email'] = $_POST['new_venue_email'];
+				$captureddata['new_venue_url'] = $_POST['new_venue_url'];
+				$captureddata['event_end_hour'] = $_POST['event_end_hour'];
+				$captureddata['event_end_minute'] = $_POST['event_end_minute'];
+				$captureddata['event_end_ampm'] = $_POST['event_end_ampm'];
 			}
 			elseif ($valid || $options['captchaevents'] == false)
 			{
@@ -2767,10 +2915,29 @@ class community_events_plugin {
 						if ($current_user)
 							$username = $current_user->user_login;
 					}
+					
+					if ($options['allowuservenuesubmissions'] === true && isset($_POST['new_venue_name']) && $_POST['new_venue_name'] != '')
+					{
+						$venuequery = "SELECT * from " . $wpdb->prefix. "ce_venues where ce_venue_name = '" . $_POST['new_venue_name'] . "'";
+						$venue = $wpdb->get_row($venuequery);
+						if (!$venue)
+						{
+							$newvenue = array("ce_venue_name" => esc_html(stripslashes($_POST['new_venue_name'])), "ce_venue_address" => esc_html(stripslashes($_POST['new_venue_address'])), "ce_venue_city" => esc_html(stripslashes($_POST['new_venue_city'])), "ce_venue_zipcode" => esc_html(stripslashes($_POST['new_venue_zipcode'])), "ce_venue_phone" => esc_html(stripslashes($_POST['new_venue_phone'])), "ce_venue_email" => esc_html(stripslashes($_POST['new_venue_email'])), "ce_venue_url" => esc_html(stripslashes($_POST['new_venue_url'])));
+							$wpdb->insert( $wpdb->prefix.'ce_venues', $newvenue );
+							$newvenue = $wpdb->get_row($newvenuequery);
+							$venueid = $newvenue->ce_venue_id;
+						}
+						else
+						{
+							$venueid = $venue->ce_venue_id;
+						}
+					}
+					else
+						$venueid = $_POST['event_venue'];
 						
-					$newevent = array("event_name" => wp_specialchars(stripslashes($_POST['event_name'])), "event_start_date" => wp_specialchars(stripslashes($_POST['event_start_date'])), "event_start_hour" => wp_specialchars(stripslashes($_POST['event_start_hour'])), "event_start_minute" => wp_specialchars(stripslashes($_POST['event_start_minute'])), "event_start_ampm" => wp_specialchars(stripslashes($_POST['event_start_ampm'])),
-						"event_description" => wp_specialchars(stripslashes($_POST['event_description'])), "event_url" => wp_specialchars(stripslashes($_POST['event_url'])), "event_ticket_url" => wp_specialchars(stripslashes($_POST['event_ticket_url'])), "event_venue" => $_POST['event_venue'], "event_category" => $_POST['event_category'],
-						"event_submitter" => $username);
+					$newevent = array("event_name" => esc_html(stripslashes($_POST['event_name'])), "event_start_date" => esc_html(stripslashes($_POST['event_start_date'])), "event_start_hour" => esc_html(stripslashes($_POST['event_start_hour'])), "event_start_minute" => esc_html(stripslashes($_POST['event_start_minute'])), "event_start_ampm" => esc_html(stripslashes($_POST['event_start_ampm'])),
+						"event_description" => esc_html(stripslashes($_POST['event_description'])), "event_url" => esc_html(stripslashes($_POST['event_url'])), "event_ticket_url" => esc_html(stripslashes($_POST['event_ticket_url'])), "event_venue" => $venueid, "event_category" => $_POST['event_category'],
+						"event_submitter" => $username, "event_end_hour" => esc_html(stripslashes($_POST['event_end_hour'])), "event_end_minute" => esc_html(stripslashes($_POST['event_end_minute'])), "event_end_ampm" => esc_html(stripslashes($_POST['event_end_ampm'])));
 					
 					if (isset($_POST['submiteventnew']))
 					{
@@ -2833,7 +3000,7 @@ class community_events_plugin {
 						$message .= __('Event Ticket Purchase Link', 'community-events') . ": " . $newevent['event_ticket_url'] . "<br /><br />";
 						$message .= __('Event Start Date', 'community-events') . ": " . $newevent['event_start_date'] . "<br />";
 						$message .= __('Event End Date', 'community-events') . ": " . $newevent['event_end_date'] . "<br />";
-						$message .= __('Event Time', 'community-events') . ": " . $newevent['event_start_hour'] . ":" . $newevent['event_start_minute'] . $newevent['event_start_ampm'] . "<br /><br />";
+						$message .= __('Event Start Time', 'community-events') . ": " . $newevent['event_start_hour'] . ":" . $newevent['event_start_minute'] . $newevent['event_start_ampm'] . "<br /><br />";						   $message .= __('Event End Time', 'community-events') . ": " . $newevent['event_end_hour'] . ":" . $newevent['event_end_minute'] . $newevent['event_end_ampm'] . "<br /><br />";
 									
 						if ( !defined('WP_ADMIN_URL') )
 							define( 'WP_ADMIN_URL', get_option('siteurl') . '/wp-admin');
@@ -2851,12 +3018,17 @@ class community_events_plugin {
 		return $message . $this->ce_addevent($options['columns'], $options['addeventreqlogin'], $options['addneweventmsg'], $options['eventnamelabel'], $options['eventcatlabel'], 
 							$options['eventvenuelabel'], $options['eventdesclabel'], $options['eventaddrlabel'], $options['eventticketaddrlabel'], $options['eventdatelabel'],
 							$options['eventtimelabel'], $options['addeventbtnlabel'], $options['eventenddatelabel'], $options['captchaevents'], $captureddata,
-							$options['allowuserediting'], $options['updateeventbtnlabel']);
+							$options['allowuserediting'], $options['updateeventbtnlabel'], $options['newvenuenamelabel'], $options['newvenueaddresslabel'],
+						$options['newvenuecitylabel'], $options['newvenuezipcodelabel'], $options['newvenuephonelabel'],
+						$options['newvenueemaillabel'], $options['newvenueurllabel'], $options['allowuservenuesubmissions'], $options['displayendtimefield'], $options['eventendtimelabel']
+				);
 	}
 
 	function ce_addevent($columns = 2, $addeventreqlogin = false, $addneweventmsg = "", $eventnamelabel = "", $eventcatlabel = "", $eventvenuelabel = "", 
 						$eventdesclabel = "", $eventaddrlabel = "", $eventticketaddrlabel = "", $eventdatelabel = "", $eventtimelabel = "", $addeventbtnlabel = "",
-						$eventenddatelabel = "", $captchaevents = false, $captureddata, $allowuserediting = false, $updateeventbtnlabel = "") {
+						$eventenddatelabel = "", $captchaevents = false, $captureddata = null, $allowuserediting = false, $updateeventbtnlabel = "", $newvenuenamelabel = '', $newvenueaddresslabel = '',
+						$newvenuecitylabel = '', $newvenuezipcodelabel = '', $newvenuephonelabel = '',
+						$newvenueemaillabel = '', $newvenueurllabel = '', $allowuservenuesubmissions = false, $displayendtimefield = false, $eventendtimelabel = '') {
 
 		global $wpdb;
 
@@ -2918,7 +3090,7 @@ class community_events_plugin {
 				$output .= "</tr><tr>";
 				
 			if ($eventvenuelabel == "") $eventvenuelabel = __('Event Venue', 'community-events');		
-			$output .= "<th style='width: 100px'>" . $eventvenuelabel . "</th><td><select style='width: 200px' name='event_venue'>\n";
+			$output .= "<th style='width: 100px'>" . $eventvenuelabel . "</th><td><select style='width: 200px' name='event_venue' id='event_venue'>\n";
 			$venues = $wpdb->get_results("SELECT * from " . $wpdb->prefix. "ce_venues ORDER by ce_venue_name");
 						
 			foreach ($venues as $venue)
@@ -2930,7 +3102,46 @@ class community_events_plugin {
 						
 				$output .= "<option value='" . $venue->ce_venue_id . "' " . $selectedstring . ">" .  stripslashes($venue->ce_venue_name) . "\n";
 			}
-			$output .= "</select></td></tr>\n";			
+			if ($allowuservenuesubmissions)
+			{
+				$output .= "<option value='customuservenue'";
+				
+				if ($captureddata['event_venue'] == 'customuservenue')
+					$output .= " selected='selected'";
+				
+				$output .= ">Create new venue\n";
+			}
+			
+			$output .= "</select></td></tr>\n";
+			
+			if ($allowuservenuesubmissions)
+			{
+				if ($captureddata['event_venue'] != 'customuservenue')
+					$hideoutput = " style='display:none'";
+				else
+					$hideoutput = "";
+				
+				if ($newvenuenamelabel == "") $newvenuenamelabel = __('New Venue Name', 'community-events');
+				$output .= "<tr id='newvenuerow1'" . $hideoutput . "><th>" . $newvenuenamelabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='new_venue_name' id='new_venue_name' value='" . stripslashes($captureddata['new_venue_name']) . "'/></td></tr>\n";
+
+				if ($newvenueaddresslabel == "") $newvenueaddresslabel = __('New Venue Address', 'community-events');
+				$output .= "<tr id='newvenuerow2'" . $hideoutput . "><th>" . $newvenueaddresslabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='new_venue_address' id='new_venue_address' value='" . stripslashes($captureddata['new_venue_address']) . "'/></td></tr>\n";
+
+				if ($newvenuecitylabel == "") $newvenuecitylabel = __('New Venue City', 'community-events');
+				$output .= "<tr id='newvenuerow3'" . $hideoutput . "><th>" . $newvenuecitylabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='new_venue_city' id='new_venue_city' value='" . stripslashes($captureddata['new_venue_city']) . "'/></td></tr>\n";
+
+				if ($newvenuezipcodelabel == "") $newvenuezipcodelabel = __('New Venue Zip Code', 'community-events');
+				$output .= "<tr id='newvenuerow4'" . $hideoutput . "><th>" . $newvenuezipcodelabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='new_venue_zipcode' id='new_venue_zipcode' value='" . stripslashes($captureddata['new_venue_zipcode']) . "'/></td></tr>\n";
+
+				if ($newvenuephonelabel == "") $newvenuephonelabel = __('New Venue Phone', 'community-events');
+				$output .= "<tr id='newvenuerow5'" . $hideoutput . "><th>" . $newvenuephonelabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='new_venue_phone' id='new_venue_phone' value='" . stripslashes($captureddata['new_venue_phone']) . "'/></td></tr>\n";
+
+				if ($newvenueemaillabel == "") $newvenueemaillabel = __('New Venue E-mail', 'community-events');
+				$output .= "<tr id='newvenuerow6'" . $hideoutput . "><th>" . $newvenueemaillabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='new_venue_email' id='new_venue_email' value='" . stripslashes($captureddata['new_venue_email']) . "'/></td></tr>\n";
+
+				if ($newvenueurllabel == "") $newvenueurllabel = __('New Venue URL', 'community-events');
+				$output .= "<tr id='newvenuerow7'" . $hideoutput . "><th>" . $newvenueurllabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='new_venue_url' id='new_venue_url' value='" . stripslashes($captureddata['new_venue_url']) . "'/></td></tr>\n";
+			}
 			
 			if ($eventdesclabel == "") $eventdesclabel = __('Event Description', 'community-events');
 			$output .= "<tr><th>" . $eventdesclabel . "</th><td colspan=" . ($columns == 1 ? 1 : 3) . "><input type='text' style='width: 100%' name='event_description' id='event_description' value='" . stripslashes($captureddata['event_description']) . "'/></td></tr>\n";				
@@ -2996,7 +3207,58 @@ class community_events_plugin {
 			$output .= "</td></tr>\n";
 			
 			if ($eventenddatelabel == "") $eventenddatelabel = __('Event End Date', 'community-events');
-			$output .= "<tr><th>" . $eventenddatelabel . "</th><td colspan='3'><input type='text' name='event_end_date' id='datepickeraddformend' value='" . $captureddata['event_end_date'] . "'/></td>\n";
+			$output .= "<tr><th>" . $eventenddatelabel . "</th><td colspan='" . ($columns == 1 ? 1 : 1) . "'><input type='text' name='event_end_date' id='datepickeraddformend' value='" . $captureddata['event_end_date'] . "'/></td>\n";
+			
+			if ($displayendtimefield == true)
+			{
+				if ($columns == 1)
+				$output .= "</tr><tr>";
+						
+				if ($eventendtimelabel == "") $eventendtimelabel = __('Event End Time', 'community-events');
+				$output .= "<th>" . $eventendtimelabel . "</th><td>";
+
+				$output .= "<select name='event_end_hour' style='width: 50px'>\n";
+				for ($i = 1; $i <= 12; $i++)
+				{
+					if ($i == $captureddata['event_end_hour'])
+						$selectedstring = " selected='selected'";
+					else 
+						$selectedstring = ""; 
+
+					$output .= "<option value=" . $i . $selectedstring . ">" . $i . "</option>\n";
+				}
+				$output .= "</select>:\n";
+
+				$output .= "<select name='event_end_minute' style='width: 50px'>\n";
+
+				$minutes = array('00', '15', '30', '45');
+				foreach ($minutes as $minute)
+				{
+					if ($i == $captureddata['event_end_minute'])
+						$selectedstring = " selected='selected'";
+					else 
+						$selectedstring = ""; 
+
+					$output .= "<option value=" . $minute . $selectedstring . ">" . $minute . "</option>\n";
+				}
+				$output .= "</select>\n";
+
+				$output .= "<select name='event_end_ampm' style='width: 50px'>\n";
+				$output .= "<option value='AM'>AM</option>\n";
+
+				if ("PM" == $captureddata['event_end_ampm'])
+						$selectedstring = " selected='selected'";
+					else 
+						$selectedstring = ""; 
+
+				$output .= "<option value='PM' " . $selectedstring . ">PM</option>\n";
+				$output .= "</select>\n";
+
+				$output .= "</td>\n";
+				
+			}
+			
+			$output .= "</tr>";
 			
 			if ($captchaevents)
 			{
@@ -3082,7 +3344,18 @@ class community_events_plugin {
 			$output .= "jQuery('#event_name').change(function() { validatefields();});\n";
 			$output .= "jQuery('#datepickeraddform').change(function() { validatefields();});\n";
 			$output .= "jQuery('#datepickeraddformend').change(function() { validatefields();});\n";
-			$output .= "});\n";
+			
+			if ($allowuservenuesubmissions)
+			{
+				$output .= "jQuery('#event_venue').change(function() {\n";
+				$output .= "\tdropdownvalue = jQuery('#event_venue').val();\n";
+				$output .= "\tif (dropdownvalue == 'customuservenue') { jQuery('#newvenuerow1').fadeIn(); jQuery('#newvenuerow2').fadeIn(); jQuery('#newvenuerow3').fadeIn(); jQuery('#newvenuerow4').fadeIn(); jQuery('#newvenuerow5').fadeIn(); jQuery('#newvenuerow6').fadeIn(); jQuery('#newvenuerow7').fadeIn(); }\n";
+				$output .= "\telse {jQuery('#newvenuerow1').fadeOut(); jQuery('#newvenuerow2').fadeOut(); jQuery('#newvenuerow3').fadeOut(); jQuery('#newvenuerow4').fadeOut(); jQuery('#newvenuerow5').fadeOut(); jQuery('#newvenuerow6').fadeOut(); jQuery('#newvenuerow7').fadeOut();}\n";
+				$output .= "});\n";
+			}
+			
+			$output .= "});\n";			
+						
 			$output .= "</script>\n";
 		}
 
