@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 1.2
+Version: 1.2.1
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -2985,7 +2985,7 @@ class community_events_plugin {
 						$headers = "MIME-Version: 1.0\r\n";
 						$headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 						
-						$venuenamequery = "select ce_venue_name from " . $wpdb->prefix . "ce_venues where ce_venue_id = " . $newevent['event_venue'];
+						$venuenamequery = "select ce_venue_name from " . $wpdb->prefix . "ce_venues where ce_venue_id = " . $venueid;
 						$venuename = $wpdb->get_var($venuenamequery);
 
 						$categorynamequery = "select event_cat_name from " . $wpdb->prefix . "ce_category where event_cat_id = " . $newevent['event_category'];
@@ -3092,7 +3092,17 @@ class community_events_plugin {
 			if ($eventvenuelabel == "") $eventvenuelabel = __('Event Venue', 'community-events');		
 			$output .= "<th style='width: 100px'>" . $eventvenuelabel . "</th><td><select style='width: 200px' name='event_venue' id='event_venue'>\n";
 			$venues = $wpdb->get_results("SELECT * from " . $wpdb->prefix. "ce_venues ORDER by ce_venue_name");
-						
+				
+			if ($allowuservenuesubmissions)
+			{
+				$output .= "<option value=''>";
+				$output .= "<option value='customuservenue'";
+				
+				if ($captureddata['event_venue'] == 'customuservenue')
+					$output .= " selected='selected'";
+				
+				$output .= ">-- Create new venue --\n";
+			}
 			foreach ($venues as $venue)
 			{
 				if ($venue->ce_venue_id == $captureddata['event_venue'])
@@ -3102,16 +3112,7 @@ class community_events_plugin {
 						
 				$output .= "<option value='" . $venue->ce_venue_id . "' " . $selectedstring . ">" .  stripslashes($venue->ce_venue_name) . "\n";
 			}
-			if ($allowuservenuesubmissions)
-			{
-				$output .= "<option value='customuservenue'";
-				
-				if ($captureddata['event_venue'] == 'customuservenue')
-					$output .= " selected='selected'";
-				
-				$output .= ">Create new venue\n";
-			}
-			
+						
 			$output .= "</select></td></tr>\n";
 			
 			if ($allowuservenuesubmissions)

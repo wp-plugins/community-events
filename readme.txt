@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.2.1 =
+* Fixed code for e-mail notification to display new venue names when user submitted
+
 = 1.2 =
 * Added option to allow users to submit new venues by selecting last entry in venue list
 * Added option to display and accept event end time
