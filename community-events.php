@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 1.2.1
+Version: 1.2.2
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -2044,7 +2044,7 @@ class community_events_plugin {
 				
 				//echo "Day: " . $calculatedday . ", values are: " . print_r($dayevents);
 				
-				$output .= "\t\t<tr><td class='" . ($i % 2 == 0 ? "even" : "odd") . "'>";
+				$output .= "\t\t<tr><td class='" . ($i % 2 == 0 ? "community-events-even" : "community-events-odd") . "'>";
 				$output .= "<!-- Year " . $year . " Dayofyear " . $calculatedday . " -->\n";
 				$output .= "<span class='ce-outlook-day'>" . date("l, M jS", strtotime("+" . $i . " day", current_time('timestamp')));
 				
@@ -2219,7 +2219,7 @@ class community_events_plugin {
 		
 		for ($i = 0; $i <= 6; $i++) {
 			$daynumber = $currentday + $i;
-			$output .= "\t<td class='ce-daybox " . ($i % 2 == 0 ? "even" : "odd") . " " . ((($outlook == false && $i == 0) || ($outlook == true && $i == 0 && $outlookdefault == false)) ? "selected" : "");
+			$output .= "\t<td class='ce-daybox " . ($i % 2 == 0 ? "community-events-even" : "community-events-odd") . " " . ((($outlook == false && $i == 0) || ($outlook == true && $i == 0 && $outlookdefault == false)) ? "selected" : "");
 			$output .= "' id='day_" . $daynumber . "_" . $currentyear . "_cell'>\n";
 			
 			$output .= "\t\t<span class='ce-dayname'><a href='#' class='ce-day-link' id='day_" . $daynumber . "_" . $currentyear . "' onClick=\"showEvents('" . $daynumber. "', '" . $currentyear . "', false, false, '');return false;\">" . date("D", strtotime("+" . $i . " day", current_time('timestamp'))) . "<br /><span class='ce-date'>" . date("j", strtotime("+" . $i . " day", current_time('timestamp'))) . "</a></span>\n";
@@ -2636,7 +2636,7 @@ class community_events_plugin {
 					$doy = $fullevent['queryday'];
 				}
 					
-				$output .= "\t\t<tr><td colspan='2' class='ce-full-event-name " . ($daycount % 2 == 0 ? "even" : "odd" ) . "'>";
+				$output .= "\t\t<tr><td colspan='2' class='ce-full-event-name " . ($daycount % 2 == 0 ? "community-events-even" : "community-events-odd" ) . "'>";
 				
 				$output .= "<span class='";
 				
@@ -2684,7 +2684,7 @@ class community_events_plugin {
 				
 				if ($fullevent['ce_venue_name'] != "")
 				{
-					$output .= '<td colspan="2" class="ce-full-event-venue ' . ($daycount % 2 == 0 ? "even" : "odd" ) . '"><span class="cetooltip ce-venue-name" title="<strong>' . stripslashes($fullevent['ce_venue_name']) . '</strong><br />' . stripslashes($fullevent['ce_venue_address'])  . '<br />' . stripslashes($fullevent['ce_venue_city']) . '<br />' . $fullevent['ce_venue_zipcode'] . '<br />' . $fullevent['ce_venue_email'] . '<br />' . $fullevent['ce_venue_phone'] . '<br />' .  $fullevent['ce_venue_url'] . '"><a href="' . get_permalink() . '?venueset=1&amp;venue=' . $fullevent['ce_venue_id'] . '">' . stripslashes($fullevent['ce_venue_name']) . '</a> / <a href="' . get_permalink() . '?locationset=1&amp;location=' . stripslashes($fullevent['ce_venue_city']) . '">' . stripslashes($fullevent['ce_venue_city']) . '</a></span>';
+					$output .= '<td colspan="2" class="ce-full-event-venue ' . ($daycount % 2 == 0 ? "community-events-even" : "community-events-odd" ) . '"><span class="cetooltip ce-venue-name" title="<strong>' . stripslashes($fullevent['ce_venue_name']) . '</strong><br />' . stripslashes($fullevent['ce_venue_address'])  . '<br />' . stripslashes($fullevent['ce_venue_city']) . '<br />' . $fullevent['ce_venue_zipcode'] . '<br />' . $fullevent['ce_venue_email'] . '<br />' . $fullevent['ce_venue_phone'] . '<br />' .  $fullevent['ce_venue_url'] . '"><a href="' . get_permalink() . '?venueset=1&amp;venue=' . $fullevent['ce_venue_id'] . '">' . stripslashes($fullevent['ce_venue_name']) . '</a> / <a href="' . get_permalink() . '?locationset=1&amp;location=' . stripslashes($fullevent['ce_venue_city']) . '">' . stripslashes($fullevent['ce_venue_city']) . '</a></span>';
 					
 					 if ($fullevent['event_ticket_url'] != "")
 					 {

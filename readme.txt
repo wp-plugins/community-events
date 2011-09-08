@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.2.2 =
+* Changed name of CSS classes for item coloring from even and odd to community-events-even and community-events-off to avoid conflicts with other themes and templates
+
 = 1.2.1 =
 * Fixed code for e-mail notification to display new venue names when user submitted
 
