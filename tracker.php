@@ -2,7 +2,7 @@
 	require_once('../../../wp-load.php');
 	require_once('community-events.php');
 	
-	$event_id = $_POST['id'];
+	$event_id = intval($_POST['id']);
 	echo "Received ID is: " . $event_id;
 	
 	global $wpdb;
