@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 1.2.3
+Version: 1.2.4
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -72,16 +72,16 @@ class community_events_plugin {
 	//for WordPress 2.8 we have to tell, that we support 2 columns !
 	function on_screen_layout_columns($columns, $screen) {
 		if ($screen == $this->pagehooktop) {
-			$columns[$this->pagehooktop] = 2;
+			$columns[$this->pagehooktop] = 1;
 		}
 		elseif ($screen == $this->pagehookeventtypes) {
-			$columns[$this->pagehookeventtypes] = 2;
+			$columns[$this->pagehookeventtypes] = 1;
 		}
 		elseif ($screen == $this->pagehookvenues) {
-			$columns[$this->pagehookvenues] = 2;
+			$columns[$this->pagehookvenues] = 1;
 		}
 		elseif ($screen == $this->pagehookevents) {
-			$columns[$this->pagehookevents] = 2;
+			$columns[$this->pagehookevents] = 1;
 		}
 		elseif ($screen == $this->pagehookstylesheet) {
 			$columns[$this->pagehookstylesheet] = 1;
@@ -337,14 +337,15 @@ class community_events_plugin {
 		add_meta_box('communityevents_general_config_meta_box', __('General Configuration', 'community-events'), array($this, 'general_config_meta_box'), $this->pagehooktop, 'normal', 'high');		
 		add_meta_box('communityevents_general_user_sub_meta_box', __('Event User Submission', 'community-events'), array($this, 'general_user_sub_meta_box'), $this->pagehooktop, 'normal', 'high');		
 		add_meta_box('communityevents_general_rssgen_meta_box', __('RSS Feed Generation', 'community-events'), array($this, 'general_user_rssgen_box'), $this->pagehooktop, 'normal', 'high');		
-		add_meta_box('communityevents_general_save_meta_box', __('Save', 'community-events'), array($this, 'general_save_meta_box'), $this->pagehooktop, 'side', 'high');
+		add_meta_box('communityevents_general_save_meta_box', __('Save', 'community-events'), array($this, 'general_save_meta_box'), $this->pagehooktop, 'normal', 'high');
 		add_meta_box('communityevents_event_types_meta_box', __('Event Types Editor', 'community-events'), array($this, 'event_types_meta_box'), $this->pagehookeventtypes, 'normal', 'high');
-		add_meta_box('communityevents_event_types_save_meta_box', __('Save', 'community-events'), array($this, 'event_types_save_meta_box'), $this->pagehookeventtypes, 'side', 'high');
+		add_meta_box('communityevents_event_types_save_meta_box', __('Save', 'community-events'), array($this, 'event_types_save_meta_box'), $this->pagehookeventtypes, 'normal', 'high');
 		add_meta_box('communityevents_venues_meta_box', __('Venues Editor', 'community-events'), array($this, 'event_venues_meta_box'), $this->pagehookvenues, 'normal', 'high');
 		add_meta_box('communityevents_venues_importer_meta_box', __('Venues Importer', 'community-events'), array($this, 'event_venues_importer_meta_box'), $this->pagehookvenues, 'normal', 'high');
-		add_meta_box('communityevents_venues_save_meta_box', __('Save', 'community-events'), array($this, 'event_venues_save_meta_box'), $this->pagehookvenues, 'side', 'high');				
+		add_meta_box('communityevents_venues_save_meta_box', __('Save', 'community-events'), array($this, 'event_venues_save_meta_box'), $this->pagehookvenues, 'normal', 'high');				
 		add_meta_box('communityevents_events_meta_box', __('Events Editor', 'community-events'), array($this, 'events_meta_box'), $this->pagehookevents, 'normal', 'high');
- 		add_meta_box('communityevents_events_save_meta_box', __('Save', 'community-events'), array($this, 'events_save_meta_box'), $this->pagehookevents, 'side', 'high');			add_meta_box('communityevents_events_stylesheet_meta_box', __('Stylesheet Editor', 'community-events'), array($this, 'events_stylesheet_meta_box'), $this->pagehookstylesheet, 'normal', 'high');
+ 		add_meta_box('communityevents_events_save_meta_box', __('Save', 'community-events'), array($this, 'events_save_meta_box'), $this->pagehookevents, 'normal', 'high');			
+		add_meta_box('communityevents_events_stylesheet_meta_box', __('Stylesheet Editor', 'community-events'), array($this, 'events_stylesheet_meta_box'), $this->pagehookstylesheet, 'normal', 'high');
 	}
 
 	//executed to show the plugins complete admin page
@@ -489,23 +490,9 @@ class community_events_plugin {
 			<?php wp_nonce_field('meta-box-order', 'meta-box-order-nonce', false ); ?>
 			<input type="hidden" name="action" value="<?php echo $formvalue; ?>" />
 		
-			<div id="poststuff" class="metabox-holder<?php echo 2 == $screen_layout_columns ? ' has-right-sidebar' : ''; ?>">
-				<div id="side-info-column" class="inner-sidebar">
-					<?php 
-						if ($_GET['page'] == 'community-events')
-							do_meta_boxes($this->pagehooktop, 'side', $data); 
-						elseif ($_GET['page'] == 'community-events-event-types')
-							do_meta_boxes($this->pagehookeventtypes, 'side', $data); 
-						elseif ($_GET['page'] == 'community-events-venues')
-							do_meta_boxes($this->pagehookvenues, 'side', $data); 
-						elseif ($_GET['page'] == 'community-events-events')
-							do_meta_boxes($this->pagehookevents, 'side', $data);
-						elseif ($_GET['page'] == 'community-events-stylesheet')
-							do_meta_boxes($this->pagehookstylesheet, 'side', $data); 
-					?>
-				</div>
-				<div id="post-body" class="has-sidebar">
-					<div id="post-body-content" class="has-sidebar-content">
+			<div id="poststuff" class="metabox-holder">
+				<div id="post-body">
+					<div id="post-body-content">
 						<?php 
 							if ($_GET['page'] == 'community-events')
 								do_meta_boxes($this->pagehooktop, 'normal', $data); 

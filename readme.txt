@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.2.4 =
+* Fixed problem with hidden meta boxes with save controls with WordPress 3.3
+
 = 1.2.3 =
 * Fixed security exploit in link tracking code
 
