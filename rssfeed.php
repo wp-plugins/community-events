@@ -94,20 +94,20 @@
 	{
 		foreach ($events as $event)
 		{		
-			$event_name_string = $event['event_name'] . ": " . $event['formatted_start_date'];
+			$event_name_string = esc_html($event['event_name']) . ": " . $event['formatted_start_date'];
 			
 			if ($event['formatted_end_date'] != '')
 				$event_name_string .= " - " . $event['formatted_end_date'];
 				
-			$event_name_string .= " at " . $event['ce_venue_name'] . ", " . $event['event_start_hour'] . ":" . str_pad($event['event_start_minute'], 2, "0", STR_PAD_LEFT) . " " . $event['event_start_ampm'];
+			$event_name_string .= " at " . esc_html($event['ce_venue_name']) . ", " . $event['event_start_hour'] . ":" . str_pad($event['event_start_minute'], 2, "0", STR_PAD_LEFT) . " " . $event['event_start_ampm'];
 						
 			// ITEM
 			 $rss->addItem (
-                             $event_name_string, // Title
+                             esc_html($event_name_string), // Title
                              $options['rssfeedtargetaddress'], // Link
                              "", // Description
 							 $event['event_start_date'], //Publication Date
-							 $event['event_cat_name'] // Category							 
+							 esc_html($event['event_cat_name']) // Category							 
                            );
 		
 		}
