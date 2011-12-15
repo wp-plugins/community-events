@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.2.6 =
+* Fixes to query to display full calendar. Problems were showing up when approaching the end of the year
+
 = 1.2.5 =
 * Correct problem with special characters with RSS feed
 
