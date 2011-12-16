@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.2.8 =
+* Fixed to query to display 7-day calendar to avoid events from following year to display
+
 = 1.2.7 =
 * Removed debugging code
 

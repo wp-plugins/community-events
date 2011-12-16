@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to create a page with a list of TV shows
-Version: 1.2.7
+Version: 1.2.8
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -1845,21 +1845,31 @@ class community_events_plugin {
 			
 			$eventquery .= "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
 			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
-
-			$eventquery .= "WHERE ((YEAR(event_start_date) = " . $year;
+			
+			$eventquery .= "WHERE ((YEAR(event_start_date) = " . $year . " and YEAR(event_end_date) = " . $year;
 			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $dayofyear . " ";
-			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $dayofyear . ") ";
+			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $dayofyear . ") OR ";
 			
-			$eventquery .= "OR (YEAR(event_start_date) < " . $year;
+			$eventquery .= "(YEAR(event_start_date) = " . $year . " and YEAR(event_end_date) > " . $year;
+			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $dayofyear . ") OR ";
+			
+			$eventquery .= " (YEAR(event_start_date) < " . $year;
 			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $dayofyear;
-			$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) >= " . $year . ") ";
+			$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) = " . $year . ") OR ";
 			
-			$eventquery .= "OR (YEAR(event_end_date) > " . $year . " ";
-			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $dayofyear . ") ";
+			$eventquery .= " (YEAR(event_start_date) < " . $year;
+			$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) > " . $year . ") OR ";
 			
-			$eventquery .= "OR (YEAR(event_end_date) = " . $year;
+			$eventquery .= " (YEAR(event_end_date) > " . $year . " ";
+			$eventquery .= " and YEAR(event_start_date) = " . $year . " ";
+			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $dayofyear . ") OR ";
+			
+			$eventquery .= " (YEAR(event_end_date) > " . $year . " ";
+			$eventquery .= " and YEAR(event_start_date) < " . $year . ") OR ";
+			
+			$eventquery .= " (YEAR(event_end_date) = " . $year;
 			$eventquery .= " and YEAR(DATE(event_start_date)) < " . $year;
-			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $dayofyear . ")) ";
+			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $dayofyear . ")) ";		
 			
 			if ($moderateevents == 'true')
 				$eventquery .= " and event_published = 'Y' ";
@@ -2004,21 +2014,31 @@ class community_events_plugin {
 				
 				$eventquery .= "SELECT * , if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
 				$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
-				
-				$eventquery .= "WHERE ((YEAR(event_start_date) = " . $year;
+								
+				$eventquery .= "WHERE ((YEAR(event_start_date) = " . $year . " and YEAR(event_end_date) = " . $year;
 				$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $calculatedday . " ";
-				$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday . ") ";
+				$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday . ") OR ";
 				
-				$eventquery .= "OR (YEAR(event_start_date) < " . $year;
+				$eventquery .= "(YEAR(event_start_date) = " . $year . " and YEAR(event_end_date) > " . $year;
+				$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $calculatedday . ") OR ";
+				
+				$eventquery .= " (YEAR(event_start_date) < " . $year;
 				$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday;
-				$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) >= " . $year . ") ";
+				$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) = " . $year . ") OR ";
 				
-				$eventquery .= "OR (YEAR(event_end_date) > " . $year . " ";
-				$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $calculatedday . ") ";
+				$eventquery .= " (YEAR(event_start_date) < " . $year;
+				$eventquery .= " and DAYOFYEAR(YEAR(event_end_date)) > " . $year . ") OR ";
 				
-				$eventquery .= "OR (YEAR(event_end_date) = " . $year;
+				$eventquery .= " (YEAR(event_end_date) > " . $year . " ";
+				$eventquery .= " and YEAR(event_start_date) = " . $year . " ";
+				$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $calculatedday . ") OR ";
+				
+				$eventquery .= " (YEAR(event_end_date) > " . $year . " ";
+				$eventquery .= " and YEAR(event_start_date) < " . $year . ") OR ";
+				
+				$eventquery .= " (YEAR(event_end_date) = " . $year;
 				$eventquery .= " and YEAR(DATE(event_start_date)) < " . $year;
-				$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday . ")) ";
+				$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $calculatedday . ")) ";				
 				
 				if ($moderateevents == 'true')
 					$eventquery .= " and event_published = 'Y' ";
@@ -2556,12 +2576,22 @@ class community_events_plugin {
 			$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
 				
 			$eventquery .= ") order by event_start_date, event_name";
+			//echo $eventquery;
 			$events = $wpdb->get_results($eventquery, ARRAY_A);
 			
 			$doy = 0;
-						
+			
+			if ($loopcount == 90)
+			{
+				echo "<!-- " . $eventquery . " -->";
+			}
+			
+			//$output .= "<tr><td>Query Day: " . $queryday . ", Query Year: " . $queryyear . "<br>" . $eventquery . "</td></tr>";
+
 			if ($events)
 			{	
+				//$output .= "<tr><td>" . $queryday . "</td></tr>";
+				
 				foreach($events as $event)
 				{	
 					$newvalue = array_push($fulleventlist, $event);
