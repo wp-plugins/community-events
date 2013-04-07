@@ -1,7 +1,7 @@
 <?php
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
-Description: A plugin used to create a page with a list of TV shows
+Description: A plugin used to manage events and display them in a widget
 Version: 1.2.8
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
