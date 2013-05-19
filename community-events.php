@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to manage events and display them in a widget
-Version: 1.2.8
+Version: 1.2.9
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2010  Yannick Lefebvre  (email : ylefebvre@gmail.com)
