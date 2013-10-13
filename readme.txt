@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.3 =
+* Added internationalization support
+
 = 1.2.9 =
 * Updated version of datepicker script to fix javascript errors with current WordPress versions.
 
