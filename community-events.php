@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to manage events and display them in a widget
-Version: 1.3
+Version: 1.3.1
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2013  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -1424,9 +1424,9 @@ class community_events_plugin {
 				}
 				
 				if (allowsubmit == false)
-					jQuery('#<?php if ($mode == 'edit') echo 'updateevent'; else echo 'newevent'; ?>').attr('disabled', 'disabled');
+					jQuery('#<?php if ($mode == 'edit') echo 'updateevent'; else echo 'newevent'; ?>').prop('disabled', true);
 				else
-					jQuery('#<?php if ($mode == 'edit') echo 'updateevent'; else echo 'newevent'; ?>').removeAttr('disabled');
+					jQuery('#<?php if ($mode == 'edit') echo 'updateevent'; else echo 'newevent'; ?>').prop('disabled', false);
 
 			}
 
@@ -3353,9 +3353,9 @@ class community_events_plugin {
 			$output .= "}\n\n";
 				
 			$output .= "if (allowsubmit == false)\n";
-			$output .= "\tjQuery('#submit').attr('disabled', 'disabled');\n";
+			$output .= "\tjQuery('#" . $btnname . "').prop('disabled', true);\n";
 			$output .= "else\n";
-			$output .= "\tjQuery('#submit').removeAttr('disabled');\n";
+			$output .= "\tjQuery('#" . $btnname . "').prop('disabled', false);\n";
 			$output .= "}\n";
 			
 			$output .= "jQuery(document).ready(function() {\n";

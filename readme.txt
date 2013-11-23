@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.3.1 =
+* Fixed problem with Add Event button never becoming enabled.
+
 = 1.3 =
 * Added internationalization support
 
