@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
 Description: A plugin used to manage events and display them in a widget
-Version: 1.3.1
+Version: 1.3.2
 Author: Yannick Lefebvre
 Author URI: http://yannickcorner.nayanna.biz
 Copyright 2013  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -52,10 +52,10 @@ class community_events_plugin {
 		add_action('admin_post_save_community_events_stylesheet', array($this, 'on_save_changes_stylesheet'));
 		
 		wp_enqueue_script('jquery');
-		wp_enqueue_script('tiptip', get_bloginfo('wpurl').'/wp-content/plugins/community-events/tiptip/jquery.tipTip.minified.js', "jQuery", "1.0rc3");
-		wp_enqueue_style('tiptipstyle', get_bloginfo('wpurl').'/wp-content/plugins/community-events/tiptip/tipTip.css');
-		wp_enqueue_script('ui.datepicker', get_bloginfo('wpurl') . '/wp-content/plugins/community-events/js/ui.datepicker.js');
-		wp_enqueue_style('datePickerstyle', get_bloginfo('wpurl') . '/wp-content/plugins/community-events/css/ui-lightness/jquery-ui-1.8.4.custom.css');
+		wp_enqueue_script('tiptip', plugins_url( 'tiptip/jquery.tipTip.minified.js', __FILE__ ), "jquery", "1.0rc3");
+		wp_enqueue_style('tiptipstyle', plugins_url( 'tiptip/tipTip.css', __FILE__ ) );
+		wp_enqueue_script('jquery-ui-datepicker');
+		wp_enqueue_style('datePickerstyle', plugins_url( 'css/ui-lightness/jquery-ui-1.8.4.custom.css', __FILE__ ) );
 		
 		add_shortcode('community-events-7day', array($this, 'ce_7day_func'));
 		add_shortcode('community-events-full', array($this, 'ce_full_func'));
@@ -875,8 +875,24 @@ class community_events_plugin {
 		
 		if ($moderate == true)
 			$countquery .= " event_published = 'N' AND ";
-		
-		$countquery .= "YEAR(event_start_date) = " . $currentyear . " and ( DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " OR DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ") ";
+
+        $countquery .= " ((YEAR(event_start_date) = " . $currentyear . ") and DAYOFYEAR(DATE(event_start_date)) >= " . $currentday . " AND (event_end_date IS NULL or event_end_date = event_start_date)) ";
+
+        $countquery .= " OR ((YEAR(event_start_date) = " . $currentyear;
+        $countquery .= " and DAYOFYEAR(DATE(event_start_date)) <= " . $currentday . " ";
+        $countquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ") ";
+
+        $countquery .= "OR (YEAR(event_start_date) < " . $currentyear;
+        $countquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $currentday;
+        $countquery .= " and DAYOFYEAR(YEAR(event_end_date)) >= " . $currentyear . ") ";
+
+        $countquery .= "OR (YEAR(event_end_date) > " . $currentyear . ") ";
+
+        $countquery .= "OR (YEAR(event_start_date) > " . $currentyear . ") ";
+
+        $countquery .= "OR (YEAR(event_end_date) = " . $currentyear;
+        $countquery .= " and YEAR(DATE(event_start_date)) < " . $currentyear;
+        $countquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ")) ";
 			
 		$count = $wpdb->get_var($countquery);	
 		
@@ -907,8 +923,10 @@ class community_events_plugin {
 		$eventquery .= " ORDER by event_start_date, event_name LIMIT " . $start . ", 10";
 		
 		$events = $wpdb->get_results($eventquery, ARRAY_A);
-		
-		$output = "<div id='ce-event-list'>\n";
+
+        $output = "<div id='ce-event-list'>\n";
+
+        $output .= '<!-- ' . $eventquery . ' -->';
 				
 		$output .= "<table class='widefat' style='clear:none;width:100%;background: #DFDFDF url(/wp-admin/images/gray-grad.png) repeat-x scroll left top;'>\n";
 		$output .= "\t<thead>\n";
