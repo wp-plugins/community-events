@@ -1,11 +1,11 @@
 <?php
 /*Plugin Name: Community Events
-Plugin URI: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events
+Plugin URI: http://ylefebvre.ca/wordpress-plugins/community-events
 Description: A plugin used to manage events and display them in a widget
-Version: 1.3.2
+Version: 1.3.3
 Author: Yannick Lefebvre
-Author URI: http://yannickcorner.nayanna.biz
-Copyright 2013  Yannick Lefebvre  (email : ylefebvre@gmail.com)
+Author URI: http://ylefebvre.ca
+Copyright 2014  Yannick Lefebvre  (email : ylefebvre@gmail.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -150,6 +150,7 @@ class community_events_plugin {
 			$options['allowuservenuesubmissions'] = false;
 			$options['displayendtimefield'] = false;
 			$options['eventendtimelabel'] = __('Event End Time', 'community-events');
+            $options['eventorder'] = 'eventnameorder';
 			
 			$stylesheetlocation = CEDIR . '/stylesheettemplate.css';
 			if (file_exists($stylesheetlocation))
@@ -546,7 +547,7 @@ class community_events_plugin {
 						'fullvieweventsperpage', 'rssfeedtitle', 'rssfeeddescription', 'rssfeedtargetaddress',
 						'updateeventbtnlabel', 'newvenuenamelabel', 'newvenueaddresslabel',
 						'newvenuecitylabel', 'newvenuezipcodelabel', 'newvenuephonelabel',
-						'newvenueemaillabel', 'newvenueurllabel', 'eventendtimelabel') as $option_name) {
+						'newvenueemaillabel', 'newvenueurllabel', 'eventendtimelabel', 'eventorder') as $option_name) {
 				if (isset($_POST[$option_name])) {
 					$options[$option_name] = $_POST[$option_name];
 				}
@@ -870,6 +871,8 @@ class community_events_plugin {
 	
 	function print_event_table($currentyear, $currentday, $page, $moderate = false) {
 		global $wpdb;
+
+        $options = get_option('CE_PP');
 	
 		$countquery = "SELECT COUNT(*) from " . $wpdb->prefix . "ce_events where ";
 		
@@ -920,7 +923,14 @@ class community_events_plugin {
 		$eventquery .= " and YEAR(DATE(event_start_date)) < " . $currentyear;
 		$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $currentday . ")) ";
 		
-		$eventquery .= " ORDER by event_start_date, event_name LIMIT " . $start . ", 10";
+		$eventquery .= " ORDER by event_start_date, ";
+        if ( $options['eventorder'] == 'eventnameorder' || empty( $options['eventorder'] ) ) {
+            $eventquery .= 'event_name ';
+        } else if ( $options['eventtimeorder'] ) {
+            $eventquery .= 'event_start_ampm, start_hour, start_minute ';
+        }
+
+        $eventquery .= "LIMIT " . $start . ", 10";
 		
 		$events = $wpdb->get_results($eventquery, ARRAY_A);
 
@@ -1044,6 +1054,12 @@ class community_events_plugin {
 			<tr>
 				<td><?php _e('Max Number of days in Full View', 'community-events'); ?></td>
 				<td><input style="width:50px" type="text" id="fullviewmaxdays" name="fullviewmaxdays" <?php if ($options['fullviewmaxdays'] != '') echo "value='" . $options['fullviewmaxdays'] . "'"; else echo "value='90'"; ?>/></td>
+                <td style='width: 100px'></td>
+                <td><?php _e('Event Display Order', 'community-events'); ?></td>
+                <td><select id="eventorder" name="eventorder">
+                        <option value="eventnameorder" <?php selected($genoptions['eventorder'], 'eventnameorder'); ?>>Event Name
+                        <option value="eventtimeorder" <?php selected($genoptions['eventorder'], 'eventorder'); ?>>Event Time
+                    </select></td>
 			</tr>
 		</table>
 
@@ -1751,6 +1767,8 @@ class community_events_plugin {
 						$addeventurl = '', $allowuserediting = false, $displayendtimefield = false) {
 
 		global $wpdb;
+
+        $options = get_option ( 'CE_PP' );
 		
 		$output = "<table class='ce-7day-innertable' id='ce-7day-innertable'>\n";
 		
@@ -1766,7 +1784,13 @@ class community_events_plugin {
 			if ($moderateevents == 'true')
 				$eventquery .= " and event_published = 'Y' ";
 				
-			$eventquery .= " order by event_start_date";
+			$eventquery .= " order by event_start_date, ";
+
+            if ( $options['eventorder'] == 'eventnameorder' || empty( $options['eventorder'] ) ) {
+                $eventquery .= 'event_name ';
+            } else if ( $options['eventtimeorder'] ) {
+                $eventquery .= 'event_start_ampm, start_hour, start_minute ';
+            }
 						
 			$events = $wpdb->get_results($eventquery, ARRAY_A);  
 						
@@ -1896,9 +1920,15 @@ class community_events_plugin {
 				$eventquery .= " and event_published = 'Y' ";
 				
 			$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
-			
-			$eventquery .= " order by event_name";
-			
+
+            $eventquery .= " order by ";
+
+            if ( $options['eventorder'] == 'eventnameorder' || empty( $options['eventorder'] ) ) {
+                $eventquery .= 'event_name ';
+            } else if ( $options['eventtimeorder'] ) {
+                $eventquery .= 'event_start_ampm, start_hour, start_minute ';
+            }
+
 			$events = $wpdb->get_results($eventquery, ARRAY_A);
 			
 			$dayofyearforcalc = $dayofyear - 1;
@@ -2066,7 +2096,13 @@ class community_events_plugin {
 					
 				$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
 				
-				$eventquery .= " order by event_name"; 
+				$eventquery .= " order by ";
+
+                if ( $options['eventorder'] == 'eventnameorder' || empty( $options['eventorder'] ) ) {
+                    $eventquery .= 'event_name ';
+                } else if ( $options['eventtimeorder'] ) {
+                    $eventquery .= 'event_start_ampm, start_hour, start_minute ';
+                }
 				
 				$dayevents = $wpdb->get_results($eventquery, ARRAY_A);
 				
@@ -2329,6 +2365,8 @@ class community_events_plugin {
 
 	function ce_full($moderateevents = true, $fullvieweventsperpage = 20, $fullviewmaxdays = 90, $fullscheduleurl = '', $addeventurl = '', $allowuserediting = false, $displayendtimefield = false) {
 		global $wpdb;
+
+        $options = get_option( 'CE_PP' );
 		
 		if ($fullviewmaxdays == '')
 			$fullviewmaxdays = 90;
@@ -2596,8 +2634,14 @@ class community_events_plugin {
 				
 			$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
 				
-			$eventquery .= ") order by event_start_date, event_name";
-			//echo $eventquery;
+			$eventquery .= ") order by event_start_date, ";
+
+            if ( $options['eventorder'] == 'eventnameorder' || empty( $options['eventorder'] ) ) {
+                $eventquery .= 'event_name ';
+            } else if ( $options['eventtimeorder'] ) {
+                $eventquery .= 'event_start_ampm, start_hour, start_minute ';
+            }
+
 			$events = $wpdb->get_results($eventquery, ARRAY_A);
 			
 			$doy = 0;
@@ -2607,12 +2651,8 @@ class community_events_plugin {
 				echo "<!-- " . $eventquery . " -->";
 			}
 			
-			//$output .= "<tr><td>Query Day: " . $queryday . ", Query Year: " . $queryyear . "<br>" . $eventquery . "</td></tr>";
-
 			if ($events)
 			{	
-				//$output .= "<tr><td>" . $queryday . "</td></tr>";
-				
 				foreach($events as $event)
 				{	
 					$newvalue = array_push($fulleventlist, $event);

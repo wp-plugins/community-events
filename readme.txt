@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.3.3 =
+* Adds option order events by name or start time
+
 = 1.3.2 =
 * Fixed issue with viewing event in next year in back-end
 * Fixed calendar widget not appearing in advanced search
