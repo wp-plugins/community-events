@@ -1,7 +1,7 @@
 === Community Events ===
 Contributors: jackdewey
 Donate link: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events/
-Tags: events, list, AJAX
+Tags: events, list, AJAX, calendar
 Requires at least: 3.0
 Tested up to: 3.9.1
 Stable tag: trunk
