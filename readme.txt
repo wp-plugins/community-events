@@ -1,7 +1,7 @@
 === Community Events ===
 Contributors: jackdewey
 Donate link: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events/
-Tags: events, list, AJAX, calendar
+Tags: events, list, AJAX, calendar, community
 Requires at least: 3.0
 Tested up to: 3.9.1
 Stable tag: trunk
@@ -23,6 +23,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 1. To see a link for the full schedule in the 7-day box, set the address of the full schedule page in the Community Events settings.
 
 == Changelog ==
+
+= 1.3.4 =
+* Corrected PHP warnings and problem with calendar in admin interface
 
 = 1.3.3 =
 * Adds option order events by name or start time

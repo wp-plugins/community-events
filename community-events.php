@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://ylefebvre.ca/wordpress-plugins/community-events
 Description: A plugin used to manage events and display them in a widget
-Version: 1.3.3
+Version: 1.3.4
 Author: Yannick Lefebvre
 Author URI: http://ylefebvre.ca
 Copyright 2014  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -50,13 +50,10 @@ class community_events_plugin {
 		add_action('admin_post_save_community_events_venues', array($this, 'on_save_changes_venues'));
 		add_action('admin_post_save_community_events_events', array($this, 'on_save_changes_events'));
 		add_action('admin_post_save_community_events_stylesheet', array($this, 'on_save_changes_stylesheet'));
-		
-		wp_enqueue_script('jquery');
-		wp_enqueue_script('tiptip', plugins_url( 'tiptip/jquery.tipTip.minified.js', __FILE__ ), "jquery", "1.0rc3");
-		wp_enqueue_style('tiptipstyle', plugins_url( 'tiptip/tipTip.css', __FILE__ ) );
-		wp_enqueue_script('jquery-ui-datepicker');
-		wp_enqueue_style('datePickerstyle', plugins_url( 'css/ui-lightness/jquery-ui-1.8.4.custom.css', __FILE__ ) );
-		
+
+        add_action( 'wp_enqueue_scripts', array( $this, 'load_scripts' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'load_scripts' ) );
+
 		add_shortcode('community-events-7day', array($this, 'ce_7day_func'));
 		add_shortcode('community-events-full', array($this, 'ce_full_func'));
 		add_shortcode('community-events-addevent', array($this, 'ce_addevent_func'));
@@ -71,6 +68,14 @@ class community_events_plugin {
         // Load text domain for translation of admin pages and text strings
         load_plugin_textdomain( 'community-events', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 	}
+
+    function load_scripts() {
+        wp_enqueue_script('jquery');
+        wp_enqueue_script('tiptip', plugins_url( 'tiptip/jquery.tipTip.minified.js', __FILE__ ), "jquery", "1.0rc3");
+        wp_enqueue_style('tiptipstyle', plugins_url( 'tiptip/tipTip.css', __FILE__ ) );
+        wp_enqueue_script('jquery-ui-datepicker');
+        wp_enqueue_style('datePickerstyle', plugins_url( 'css/ui-lightness/jquery-ui-1.8.4.custom.css', __FILE__ ) );
+    }
 	
 	//for WordPress 2.8 we have to tell, that we support 2 columns !
 	function on_screen_layout_columns($columns, $screen) {
@@ -96,16 +101,6 @@ class community_events_plugin {
 	function ce_install() {
 		global $wpdb;
 
-		$charset_collate = '';
-		if ( version_compare(mysql_get_server_info(), '4.1.0', '>=') ) {
-			if (!empty($wpdb->charset)) {
-				$charset_collate .= " DEFAULT CHARACTER SET $wpdb->charset";
-			}
-			if (!empty($wpdb->collate)) {
-				$charset_collate .= " COLLATE $wpdb->collate";
-			}
-		}
-		
 		$options = get_option('CE_PP');
 	
 		if ($options == false) {
@@ -134,7 +129,7 @@ class community_events_plugin {
 			$options['storelinksubmitter'] = false;
 			$options['outlookdefault'] = false;
 			$options['displaysearch'] = true;
-			$options['publishrss'] = true;
+			$options['publishfeed'] = true;
 			$options['rssfeedtitle'] = __('Community Events Calendar RSS Feed', 'community_events' );
 			$options['rssfeeddescription'] = __( 'This is a default description for the RSS Feed' , 'community-events' );
 			$options['rssfeedtargetaddress'] = '';
@@ -161,61 +156,61 @@ class community_events_plugin {
 			$wpdb->ceevents = $wpdb->prefix.'ce_events';
 			
 			$result = $wpdb->query("
-					CREATE TABLE IF NOT EXISTS `$wpdb->ceevents` (
-					  `event_id` bigint(20) NOT NULL AUTO_INCREMENT,
-					  `event_name` varchar(255) DEFAULT NULL,
-					  `event_start_date` date DEFAULT NULL,
-					  `event_start_hour` int(11) DEFAULT NULL,
-					  `event_start_minute` int(2) unsigned zerofill DEFAULT NULL,
-					  `event_start_ampm` varchar(2) DEFAULT NULL,
-					  `event_end_date` date DEFAULT NULL,
-					  `event_description` varchar(140) DEFAULT NULL,
-					  `event_url` varchar(255) DEFAULT NULL,
-					  `event_ticket_url` varchar(256) DEFAULT NULL,
-					  `event_venue` int(11) DEFAULT NULL,
-					  `event_category` int(11) DEFAULT NULL,
-					  `event_published` varchar(1) DEFAULT NULL,
-					  `event_submitter` VARCHAR(60) DEFAULT NULL,
-					  `event_click_count` INT(11) DEFAULT NULL,
-					  PRIMARY KEY (`event_id`)
-						) $charset_collate") ;
+					CREATE TABLE IF NOT EXISTS " . $wpdb->ceevents . " (
+					  event_id bigint(20) NOT NULL AUTO_INCREMENT,
+					  event_name varchar(255) DEFAULT NULL,
+					  event_start_date date DEFAULT NULL,
+					  event_start_hour int(11) DEFAULT NULL,
+					  event_start_minute int(2) unsigned zerofill DEFAULT NULL,
+					  event_start_ampm varchar(2) DEFAULT NULL,
+					  event_end_date date DEFAULT NULL,
+					  event_description varchar(140) DEFAULT NULL,
+					  event_url varchar(255) DEFAULT NULL,
+					  event_ticket_url varchar(256) DEFAULT NULL,
+					  event_venue int(11) DEFAULT NULL,
+					  event_category int(11) DEFAULT NULL,
+					  event_published varchar(1) DEFAULT NULL,
+					  event_submitter VARCHAR(60) DEFAULT NULL,
+					  event_click_count INT(11) DEFAULT NULL,
+					  UNIQUE KEY (event_id)
+						) ") ;
 	
 			$wpdb->cecats = $wpdb->prefix.'ce_category';
 			
 			$result = $wpdb->query("
-					CREATE TABLE IF NOT EXISTS `$wpdb->cecats` (
-						`event_cat_id` bigint(20) NOT NULL AUTO_INCREMENT,
-						`event_cat_name` varchar(255) DEFAULT NULL,
-						PRIMARY KEY (`event_cat_id`)
-						) $charset_collate");
+					CREATE TABLE IF NOT EXISTS " . $wpdb->cecats . " (
+						event_cat_id bigint(20) NOT NULL AUTO_INCREMENT,
+						event_cat_name varchar(255) DEFAULT NULL,
+						PRIMARY KEY (event_cat_id)
+						) ");
 				
-			$catsresult = $wpdb->query("SELECT * from `$wpdb->cecats`");
+			$catsresult = $wpdb->query("SELECT * from " . $wpdb->cecats);
 					
 			if (!$catsresult)
 				$result = $wpdb->query("
-					INSERT INTO `$wpdb->cecats` (`event_cat_name`) VALUES
+					INSERT INTO " . $wpdb->cecats . " (event_cat_name) VALUES
 					('Default')");
 	
 			$wpdb->cevenues = $wpdb->prefix.'ce_venues';
 							
 			$result = $wpdb->query("
-				CREATE TABLE IF NOT EXISTS `$wpdb->cevenues` (
-					  `ce_venue_id` bigint(20) NOT NULL AUTO_INCREMENT,
-					  `ce_venue_name` varchar(256) DEFAULT NULL,
-					  `ce_venue_address` varchar(256) DEFAULT NULL,
-					  `ce_venue_city` varchar(256) DEFAULT NULL,
-					  `ce_venue_zipcode` varchar(256) DEFAULT NULL,
-					  `ce_venue_phone` varchar(256) DEFAULT NULL,
-					  `ce_venue_email` varchar(256) DEFAULT NULL,
-					  `ce_venue_url` varchar(256) DEFAULT NULL,
-					  PRIMARY KEY (`ce_venue_id`)		
-						) $charset_collate");
+				CREATE TABLE IF NOT EXISTS " . $wpdb->cevenues . " (
+					  ce_venue_id bigint(20) NOT NULL AUTO_INCREMENT,
+					  ce_venue_name varchar(256) DEFAULT NULL,
+					  ce_venue_address varchar(256) DEFAULT NULL,
+					  ce_venue_city varchar(256) DEFAULT NULL,
+					  ce_venue_zipcode varchar(256) DEFAULT NULL,
+					  ce_venue_phone varchar(256) DEFAULT NULL,
+					  ce_venue_email varchar(256) DEFAULT NULL,
+					  ce_venue_url varchar(256) DEFAULT NULL,
+					  PRIMARY KEY (ce_venue_id)
+						) ");
 						
-			$venuesresult = $wpdb->query("SELECT * from `$wpdb->cevenues`");
+			$venuesresult = $wpdb->query("SELECT * from " . $wpdb->cevenues);
 			
 			if (!$venuesresult)
 				$result = $wpdb->query("
-					INSERT INTO `$wpdb->cevenues` (`ce_venue_name`) VALUES
+					INSERT INTO " . $wpdb->cevenues . " (ce_venue_name) VALUES
 					('Default')");	
 	
 		}
@@ -226,10 +221,10 @@ class community_events_plugin {
 				$options['schemaversion'] = 0.3;
 				update_option('CE_PP',$options);
 				
-				$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` ADD `event_start_hour` INT NULL AFTER `event_date`,  ADD `event_start_minute` INT( 2 ) UNSIGNED ZEROFILL NULL AFTER `event_start_hour`,  ADD `event_start_ampm` VARCHAR( 2 ) NULL AFTER `event_start_minute`,  ADD `event_end_date` DATE NULL AFTER `event_start_ampm`;");
-				$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` DROP `event_duration`;");
-				$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` CHANGE `event_date` `event_start_date` DATE NULL DEFAULT NULL");
-				$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` ADD `event_published` VARCHAR( 1 ) NULL;");
+				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events ADD event_start_hour INT NULL AFTER event_date,  ADD event_start_minute INT( 2 ) UNSIGNED ZEROFILL NULL AFTER event_start_hour,  ADD event_start_ampm VARCHAR( 2 ) NULL AFTER event_start_minute,  ADD event_end_date DATE NULL AFTER event_start_ampm;");
+				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events DROP event_duration;");
+				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events CHANGE event_date event_start_date DATE NULL DEFAULT NULL");
+				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events ADD event_published VARCHAR( 1 ) NULL;");
 			}
 
 			if ($options['schemaversion'] < 1.0)
@@ -237,7 +232,7 @@ class community_events_plugin {
 				$options['schemaversion'] = 1.0;
 				update_option('CE_PP',$options);
 				
-				$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` ADD `event_submitter` VARCHAR(60) NULL AFTER `event_published`;");
+				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events ADD event_submitter VARCHAR(60) NULL AFTER event_published;");
 			}
 			
 			if ($options['schemaversion'] < 1.1)
@@ -245,7 +240,7 @@ class community_events_plugin {
 				$options['schemaversion'] = 1.1;
 				update_option('CE_PP',$options);
 				
-				$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` ADD `event_click_count` INT(11) NULL AFTER `event_submitter`;");
+				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events ADD event_click_count INT(11) NULL AFTER event_submitter;");
 			}
 			
 			if ($options['schemaversion'] < 1.2)
@@ -253,7 +248,7 @@ class community_events_plugin {
 				$options['schemaversion'] = 1.2;
 				update_option('CE_PP',$options);
 				
-				$wpdb->get_results("ALTER TABLE `" . $wpdb->prefix . "ce_events` ADD `event_end_hour` INT(11) NULL AFTER `event_click_count`, ADD `event_end_minute` INT(2) UNSIGNED ZEROFILL NULL AFTER `event_end_hour`, ADD `event_end_ampm` VARCHAR(2) NULL AFTER `event_end_minute`;");				
+				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events ADD event_end_hour INT(11) NULL AFTER event_click_count, ADD event_end_minute INT(2) UNSIGNED ZEROFILL NULL AFTER event_end_hour, ADD event_end_ampm VARCHAR(2) NULL AFTER event_end_minute;");
 			}
 			
 			if ($options['fullvieweventsperpage'] == '')
@@ -357,13 +352,17 @@ class community_events_plugin {
 		//we need the global screen column value to beable to have a sidebar in WordPress 2.8
 		global $screen_layout_columns;
 		global $wpdb;
+        $mode = '';
+        $selectedcat = '';
+        $selectedevent = '';
+        $selectedvenue = '';
 
 		if ($_GET['page'] == 'community-events')
 		{
 			$pagetitle = __('Community Events General Settings', 'community-events');
 			$formvalue = 'save_community_events_general';
 
-			if ($_GET['message'] == '1')
+			if (isset( $_GET['message'] ) && $_GET['message'] == '1')
 				echo '<div id="message" class="updated fade"><p><strong>' . __('Community Events Updated', 'community-events') . '</strong></div>';
 		}
 		elseif ($_GET['page'] == 'community-events-event-types')
@@ -387,9 +386,9 @@ class community_events_plugin {
 				}
 			}
 			
-			if ($_GET['message'] == '1')
+			if (isset( $_GET['message'] ) && $_GET['message'] == '1')
 				echo '<div id="message" class="updated fade"><p><strong>' . __('Inserted New Category', 'community-events') . '</strong></div>';
-			elseif ($_GET['message'] == '2')
+			elseif ( isset( $_GET['message'] )&& $_GET['message'] == '2')
 				echo '<div id="message" class="updated fade"><p><strong>' . __('Category Updated', 'community-events') . '</strong></div>';
 		}
 		elseif ($_GET['page'] == 'community-events-venues')
@@ -460,9 +459,9 @@ class community_events_plugin {
 				}				
 			}
 			
-			if ($_GET['message'] == '1')
+			if ( isset( $_GET['message'] ) && $_GET['message'] == '1')
 				echo '<div id="message" class="updated fade"><p><strong>' . __('Inserted New Event', 'community-events') . '</strong></div>';
-			elseif ($_GET['message'] == '2')
+			elseif ( isset( $_GET['message'] ) && $_GET['message'] == '2')
 				echo '<div id="message" class="updated fade"><p><strong>' . __('Event Updated', 'community-events') . '</strong></div>';
 		}
 		elseif ($_GET['page'] == 'community-events-stylesheet')
@@ -470,9 +469,9 @@ class community_events_plugin {
 			$pagetitle = __('Community Events - Stylesheet', 'community-events');
 			$formvalue = 'save_community_events_stylesheet';
 			
-			if ($_GET['message'] == '1')
+			if ( isset( $_GET['message'] ) && $_GET['message'] == '1')
 				echo "<div id='message' class='updated fade'><p><strong>" . __('Stylesheet updated', 'community-events') . ".</strong></p></div>";
-			elseif ($_GET['message'] == '2')
+			elseif ( isset( $_GET['message'] ) && $_GET['message'] == '2')
 				echo "<div id='message' class='updated fade'><p><strong>" . __('Stylesheet reset to original state', 'community-events') . ".</strong></p></div>";
 		}
 		
@@ -522,7 +521,7 @@ class community_events_plugin {
 			// close postboxes that should be closed
 			$('.if-js-closed').removeClass('if-js-closed').addClass('closed');
 			// postboxes setup
-			postboxes.add_postbox_toggles('<?php echo $this->pagehook; ?>');
+			postboxes.add_postbox_toggles('<?php echo $this->pagehooktop; ?>');
 		});
 		//]]>
 	</script>
@@ -735,6 +734,8 @@ class community_events_plugin {
 			wp_die( __('Cheatin&#8217; uh?') );			
 		//cross check the given referer
 		check_admin_referer('community-events-general');
+
+        $options = get_option('CE_PP');
 		
 		$message = '';
 		global $wpdb;
@@ -762,10 +763,14 @@ class community_events_plugin {
 								 "event_category" => $_POST['event_category'],
 								 "event_venue" => $_POST['event_venue'],
 								 "event_published" => 'Y',
-								 "event_submitter" => $username,
-								 "event_end_hour" => $_POST['event_end_hour'],
-								 "event_end_minute" => $_POST['event_end_minute'],
-								 "event_end_ampm" => $_POST['event_end_ampm']);
+								 "event_submitter" => $username
+								 );
+
+                if ( $options['displayendtimefield'] ) {
+                    $newevent['event_end_hour'] = $_POST['event_end_hour'];
+                    $newevent['event_end_minute'] = $_POST['event_end_minute'];
+                    $newevent['event_end_ampm'] = $_POST['event_end_ampm'];
+                }
 								 
 				if ($_POST['event_end_date'] != '')
 					$newevent['event_end_date'] = $_POST['event_end_date'];
@@ -1057,8 +1062,8 @@ class community_events_plugin {
                 <td style='width: 100px'></td>
                 <td><?php _e('Event Display Order', 'community-events'); ?></td>
                 <td><select id="eventorder" name="eventorder">
-                        <option value="eventnameorder" <?php selected($genoptions['eventorder'], 'eventnameorder'); ?>>Event Name
-                        <option value="eventtimeorder" <?php selected($genoptions['eventorder'], 'eventorder'); ?>>Event Time
+                        <option value="eventnameorder" <?php selected($options['eventorder'], 'eventnameorder'); ?>>Event Name
+                        <option value="eventtimeorder" <?php selected($options['eventorder'], 'eventorder'); ?>>Event Time
                     </select></td>
 			</tr>
 		</table>
@@ -1183,7 +1188,7 @@ class community_events_plugin {
 						</tr>
 						<tr>
 							<td style='width:200px'><?php _e('New Venue URL Label', 'community-events'); ?></td>
-							<?php if ($options['newvenuenewvenueurllabelnamelabel'] == "") $options['newvenueurllabel'] = __('New Venue URL', 'community-events'); ?>
+							<?php if ($options['newvenueurllabel'] == "") $options['newvenueurllabel'] = __('New Venue URL', 'community-events'); ?>
 							<td><input type="text" id="newvenueurllabel" name="newvenueurllabel" size="30" value="<?php echo $options['newvenueurllabel']; ?>"/></td>
 						</tr>
 					</table>
@@ -1501,7 +1506,7 @@ class community_events_plugin {
 						
 							foreach ($cats as $cat)
 							{
-								if ($cat->event_cat_id == $selectedevent->event_category)
+								if ( isset( $selectedevent->event_category ) && $cat->event_cat_id == $selectedevent->event_category)
 										$selectedstring = "selected='selected'";
 									else 
 										$selectedstring = ""; 
@@ -1517,7 +1522,7 @@ class community_events_plugin {
 						
 							foreach ($venues as $venue)
 							{
-								if ($venue->ce_venue_id == $selectedevent->event_venue)
+								if ( isset( $selectedevent ) && !empty( $selectedevent ) && $venue->ce_venue_id == $selectedevent->event_venue )
 										$selectedstring = "selected='selected'";
 									else 
 										$selectedstring = ""; 
@@ -1554,7 +1559,7 @@ class community_events_plugin {
 									  {
 											echo "<option value=" . $i;
 											
-											if ($i == $selectedevent->event_start_hour) echo " selected";
+											if (isset( $selectedevent ) && !empty( $selectedevent ) && $i == $selectedevent->event_start_hour) echo " selected";
 											
 											echo ">" . $i . "</option>\n";
 									  }
@@ -1567,15 +1572,15 @@ class community_events_plugin {
 									  {
 											echo "<option value=" . $minute;
 											
-											if ($minute == $selectedevent->event_start_minute) echo " selected";
+											if (isset( $selectedevent ) && !empty( $selectedevent ) && $minute == $selectedevent->event_start_minute) echo " selected";
 											
 											echo ">" . $minute . "</option>\n";
 									  }
 								?>
 							</select>
 							<select name="event_start_ampm" style="width: 50px">
-								<option value="AM" <?php if ($selectedevent->event_start_ampm == 'AM') echo "selected='selected'"; ?>><?php _e( 'AM', 'community-events' ); ?></option>
-								<option value="PM" <?php if ($selectedevent->event_start_ampm == 'PM') echo "selected='selected'"; ?>><?php _e( 'PM', 'community-events' ); ?></option>
+								<option value="AM" <?php if (isset( $selectedevent ) && !empty( $selectedevent ) && $selectedevent->event_start_ampm == 'AM') echo "selected='selected'"; ?>><?php _e( 'AM', 'community-events' ); ?></option>
+								<option value="PM" <?php if (isset( $selectedevent ) && !empty( $selectedevent ) && $selectedevent->event_start_ampm == 'PM') echo "selected='selected'"; ?>><?php _e( 'PM', 'community-events' ); ?></option>
 							</select>						
 						</td>
 						</tr>
@@ -1641,7 +1646,7 @@ class community_events_plugin {
 						$eventcountquery = "SELECT count(*) from " . $wpdb->prefix . "ce_events where YEAR(event_start_date) = " . $currentyear . " and DAYOFYEAR(DATE(event_start_date)) >= " . $currentday;
 						$eventcounttotal = $wpdb->get_var($eventcountquery);	
 						
-						if ($_GET['pagecount'] != "")
+						if (isset( $_GET['pagecount'] ) && $_GET['pagecount'] != "")
 							$pagecount = $_GET['pagecount']; 
 						else
 							$pagecount = 1;
@@ -1774,7 +1779,7 @@ class community_events_plugin {
 		
 		if ($searchstring != '')
 		{
-			$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
+			$eventquery = "SELECT *, if(char_length(event_start_minute)=1,concat('0',event_start_minute),event_start_minute) as event_start_minute_zeros, if(char_length(event_end_minute)=1,concat('0',event_end_minute),event_end_minute) as event_end_minute_zeros from ";
 			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 			$eventquery .= "where ((event_name like '%" . $searchstring . "%')";
 			$eventquery .= "    or (ce_venue_name like '%" . $searchstring . "%')";
@@ -1873,12 +1878,13 @@ class community_events_plugin {
 				}
 				
 				if (count($events) > $maxevents)
+                    $dayofyearforcalc = $dayofyear - 1;
 					$output .= "<tr><td><a href='#' onClick=\"showEvents('" . $dayofyear . "', '" . $year . "', false, true, '');return false;\">" . __( 'See all events for', 'community-events') . " " . date("l, M jS", strtotime('+ ' . $dayofyearforcalc . 'days', mktime(0,0,0,1,1,$year))) . "</a></td></tr>\n";
 			}
 		}
 		elseif ($outlook == 'false')
 		{			
-			$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
+			$eventquery = "SELECT *, if(char_length(event_start_minute)=1,concat('0',event_start_minute),event_start_minute) as event_start_minute_zeros, if(char_length(event_end_minute)=1,concat('0',event_end_minute),event_end_minute) as event_end_minute_zeros from ";
 			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 			$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $dayofyear;
 			$eventquery .= " and (event_end_date IS NULL OR event_start_date = event_end_date) ";
@@ -1888,7 +1894,7 @@ class community_events_plugin {
 				
 			$eventquery .= "UNION ";
 			
-			$eventquery .= "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
+			$eventquery .= "SELECT *, if(char_length(event_start_minute)=1,concat('0',event_start_minute),event_start_minute) as event_start_minute_zeros, if(char_length(event_end_minute)=1,concat('0',event_end_minute),event_end_minute) as event_end_minute_zeros from ";
 			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 			
 			$eventquery .= "WHERE ((YEAR(event_start_date) = " . $year . " and YEAR(event_end_date) = " . $year;
@@ -2053,7 +2059,7 @@ class community_events_plugin {
 			{		
 				$calculatedday = $dayofyear + $i;
 			
-				$eventquery = "SELECT *, if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
+				$eventquery = "SELECT *, if(char_length(event_start_minute)=1,concat('0',event_start_minute),event_start_minute) as event_start_minute_zeros, if(char_length(event_end_minute)=1,concat('0',event_end_minute),event_end_minute) as event_end_minute_zeros from ";
 				$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 				$eventquery .= "where YEAR(event_start_date) = " . $year . " and DAYOFYEAR(DATE(event_start_date)) = " . $calculatedday;
 				$eventquery .= " and (event_end_date IS NULL OR event_start_date = event_end_date)";
@@ -2063,7 +2069,7 @@ class community_events_plugin {
 				
 				$eventquery .= "UNION ";
 				
-				$eventquery .= "SELECT * , if(char_length(`event_start_minute`)=1,concat('0',`event_start_minute`),`event_start_minute`) as `event_start_minute_zeros`, if(char_length(`event_end_minute`)=1,concat('0',`event_end_minute`),`event_end_minute`) as `event_end_minute_zeros` from ";
+				$eventquery .= "SELECT * , if(char_length(event_start_minute)=1,concat('0',event_start_minute),event_start_minute) as event_start_minute_zeros, if(char_length(event_end_minute)=1,concat('0',event_end_minute),event_end_minute) as event_end_minute_zeros from ";
 				$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 								
 				$eventquery .= "WHERE ((YEAR(event_start_date) = " . $year . " and YEAR(event_end_date) = " . $year;
