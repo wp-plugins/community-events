@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.3.5 =
+* Modified script loading code only to be process on events page under admin section
+
 = 1.3.4 =
 * Corrected PHP warnings and problem with calendar in admin interface
 

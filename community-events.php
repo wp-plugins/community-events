@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://ylefebvre.ca/wordpress-plugins/community-events
 Description: A plugin used to manage events and display them in a widget
-Version: 1.3.4
+Version: 1.3.5
 Author: Yannick Lefebvre
 Author URI: http://ylefebvre.ca
 Copyright 2014  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -52,7 +52,10 @@ class community_events_plugin {
 		add_action('admin_post_save_community_events_stylesheet', array($this, 'on_save_changes_stylesheet'));
 
         add_action( 'wp_enqueue_scripts', array( $this, 'load_scripts' ) );
-        add_action( 'admin_enqueue_scripts', array( $this, 'load_scripts' ) );
+
+        if ( is_admin() && isset( $_GET['page'] ) && $_GET['page'] == 'community-events-events' ) {
+            add_action( 'admin_enqueue_scripts', array( $this, 'load_scripts' ) );
+        }
 
 		add_shortcode('community-events-7day', array($this, 'ce_7day_func'));
 		add_shortcode('community-events-full', array($this, 'ce_full_func'));
