@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://ylefebvre.ca/wordpress-plugins/community-events
 Description: A plugin used to manage events and display them in a widget
-Version: 1.3.5
+Version: 1.4
 Author: Yannick Lefebvre
 Author URI: http://ylefebvre.ca
 Copyright 2014  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -149,6 +149,7 @@ class community_events_plugin {
 			$options['displayendtimefield'] = false;
 			$options['eventendtimelabel'] = __('Event End Time', 'community-events');
             $options['eventorder'] = 'eventnameorder';
+			$options['schemaversion'] = 1.2;
 			
 			$stylesheetlocation = CEDIR . '/stylesheettemplate.css';
 			if (file_exists($stylesheetlocation))
@@ -376,15 +377,15 @@ class community_events_plugin {
 			if ( isset($_GET['editcat']))
 			{					
 				$mode = "edit";
-				$selectedcat = $wpdb->get_row("select * from " . $wpdb->prefix . "ce_category where event_cat_id = " . $_GET['editcat']);
+				$selectedcat = $wpdb->get_row("select * from " . $wpdb->prefix . "ce_category where event_cat_id = " . intval( $_GET['editcat'] ) );
 			}
 			elseif (isset($_GET['deletecat']))
 			{
-				$catexist = $wpdb->get_row("SELECT * from " . $wpdb->prefix . "ce_category WHERE event_cat_id = " . $_GET['deletecat']);
+				$catexist = $wpdb->get_row("SELECT * from " . $wpdb->prefix . "ce_category WHERE event_cat_id = " . intval( $_GET['deletecat'] ) );
 				
 				if ($catexist)
 				{
-					$wpdb->query("DELETE from " . $wpdb->prefix . "ce_category WHERE id = " . $_GET['deletecat']);
+					$wpdb->query("DELETE from " . $wpdb->prefix . "ce_category WHERE id = " . intval( $_GET['deletecat'] ) );
 					echo '<div id="message" class="updated fade"><p><strong>' . __('Category Deleted', 'community-events') . '</strong></div>';					
 				}
 			}
@@ -402,15 +403,15 @@ class community_events_plugin {
 			if ( isset($_GET['editvenue']))
 			{					
 				$mode = "edit";								
-				$selectedvenue = $wpdb->get_row("select * from " . $wpdb->prefix . "ce_venues where ce_venue_id = " . $_GET['editvenue']);
+				$selectedvenue = $wpdb->get_row("select * from " . $wpdb->prefix . "ce_venues where ce_venue_id = " . intval( $_GET['editvenue'] ) );
 			}
 			elseif (isset($_GET['deletevenue']))
 			{
-				$venueexist = $wpdb->get_row("SELECT * from " . $wpdb->prefix . "ce_venues WHERE ce_venue_id = " . $_GET['deletevenue']);
+				$venueexist = $wpdb->get_row("SELECT * from " . $wpdb->prefix . "ce_venues WHERE ce_venue_id = " . intval( $_GET['deletevenue'] ) );
 				
 				if ($venueexist)
 				{
-					$wpdb->query("DELETE from " . $wpdb->prefix . "ce_venues WHERE ce_venue_id = " . $_GET['deletevenue']);
+					$wpdb->query( "DELETE from " . $wpdb->prefix . "ce_venues WHERE ce_venue_id = " . intval( $_GET['deletevenue'] ) );
 					echo '<div id="message" class="updated fade"><p><strong>' . __('Venue Deleted', 'community-events') . '</strong></div>';
 				}
 			}
@@ -449,15 +450,15 @@ class community_events_plugin {
 			if ( isset($_GET['editevent']))
 			{					
 				$mode = "edit";								
-				$selectedevent = $wpdb->get_row("select * from " . $wpdb->prefix . "ce_events where event_id = " . $_GET['editevent']);
+				$selectedevent = $wpdb->get_row("select * from " . $wpdb->prefix . "ce_events where event_id = " . intval( $_GET['editevent'] ) );
 			}
 			elseif (isset($_GET['deleteevent']))
 			{
-				$eventexist = $wpdb->get_row("SELECT * from " . $wpdb->prefix . "ce_events WHERE event_id = " . $_GET['deleteevent']);
+				$eventexist = $wpdb->get_row("SELECT * from " . $wpdb->prefix . "ce_events WHERE event_id = " . intval( $_GET['deleteevent'] ) );
 				
 				if ($eventexist)
 				{
-					$wpdb->query("DELETE from " . $wpdb->prefix . "ce_events WHERE event_id = " . $_GET['deleteevent']);
+					$wpdb->query("DELETE from " . $wpdb->prefix . "ce_events WHERE event_id = " . intval( $_GET['deleteevent'] ) );
 					echo '<div id="message" class="updated fade"><p><strong>' . __('Event Deleted', 'community-events') . '</strong></div>';
 				}				
 			}
@@ -944,8 +945,6 @@ class community_events_plugin {
 
         $output = "<div id='ce-event-list'>\n";
 
-        $output .= '<!-- ' . $eventquery . ' -->';
-				
 		$output .= "<table class='widefat' style='clear:none;width:100%;background: #DFDFDF url(/wp-admin/images/gray-grad.png) repeat-x scroll left top;'>\n";
 		$output .= "\t<thead>\n";
 		$output .= "\t\t<tr>\n";
@@ -1650,7 +1649,7 @@ class community_events_plugin {
 						$eventcounttotal = $wpdb->get_var($eventcountquery);	
 						
 						if (isset( $_GET['pagecount'] ) && $_GET['pagecount'] != "")
-							$pagecount = $_GET['pagecount']; 
+							$pagecount = intval( $_GET['pagecount'] );
 						else
 							$pagecount = 1;
 							
@@ -1761,18 +1760,28 @@ class community_events_plugin {
 		}
 	}
 
-	function ce_7day_func($atts) {
-		extract(shortcode_atts(array(
-		), $atts));
+	function ce_7day_func( $atts ) {
+		extract( shortcode_atts( array(
+			'filter_by_user' => ''
+		), $atts ) );
 		
 		$options = get_option('CE_PP');
+
+		if ( 'current' == $filter_by_user ) {
+			$current_user = wp_get_current_user();
+			$filter_by_user = $current_user->user_login;
+		}
+
+		if ( !empty( $filter_by_user ) ) {
+			$filter_by_user = apply_filters( 'community_events_filter_user', $filter_by_user );
+		}
 		
-		return $this->ce_7day($options['fullscheduleurl'], $options['outlook'], $options['addeventurl'], $options['maxevents7dayview'], $options['moderateevents'],
-							  $options['displaysearch'], $options['outlookdefault'], $options['allowuserediting'], $options['displayendtimefield']);
+		return $this->ce_7day( $options['fullscheduleurl'], $options['outlook'], $options['addeventurl'], $options['maxevents7dayview'], $options['moderateevents'],
+							  $options['displaysearch'], $options['outlookdefault'], $options['allowuserediting'], $options['displayendtimefield'], $filter_by_user );
 	}
 
-	function eventlist ($year, $dayofyear, $outlook = 'true', $showdate = 'false', $maxevents = 5, $moderateevents = 'false', $searchstring = '', $fullscheduleurl = '',
-						$addeventurl = '', $allowuserediting = false, $displayendtimefield = false) {
+	function eventlist ( $year, $dayofyear, $outlook = 'true', $showdate = 'false', $maxevents = 5, $moderateevents = 'false', $searchstring = '', $fullscheduleurl = '',
+						$addeventurl = '', $allowuserediting = false, $displayendtimefield = false, $filterbyuser = '' ) {
 
 		global $wpdb;
 
@@ -1784,13 +1793,17 @@ class community_events_plugin {
 		{
 			$eventquery = "SELECT *, if(char_length(event_start_minute)=1,concat('0',event_start_minute),event_start_minute) as event_start_minute_zeros, if(char_length(event_end_minute)=1,concat('0',event_end_minute),event_end_minute) as event_end_minute_zeros from ";
 			$eventquery .= $wpdb->prefix . "ce_events e LEFT JOIN " . $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
-			$eventquery .= "where ((event_name like '%" . $searchstring . "%')";
-			$eventquery .= "    or (ce_venue_name like '%" . $searchstring . "%')";
-			$eventquery .= "    or (event_description like '%" . $searchstring . "%')";
+			$eventquery .= "where ((event_name like '%s')";
+			$eventquery .= "    or (ce_venue_name like '%s')";
+			$eventquery .= "    or (event_description like '%s')";
 			$eventquery .= ")";
 			
 			if ($moderateevents == 'true')
 				$eventquery .= " and event_published = 'Y' ";
+
+			if ( !empty( $filterbyuser ) ) {
+				$eventquery .= " and event_submitter = '%s' ";
+			}
 				
 			$eventquery .= " order by event_start_date, ";
 
@@ -1799,8 +1812,16 @@ class community_events_plugin {
             } else if ( $options['eventtimeorder'] ) {
                 $eventquery .= 'event_start_ampm, start_hour, start_minute ';
             }
-						
-			$events = $wpdb->get_results($eventquery, ARRAY_A);  
+
+			if ( empty( $filterbyuser ) ) {
+				$cleanquery = $wpdb->prepare( $eventquery, '%' . $searchstring . '%', '%' . $searchstring . '%', '%' . $searchstring . '%' );
+			} else {
+				$cleanquery = $wpdb->prepare( $eventquery, '%' . $searchstring . '%', '%' . $searchstring . '%', '%' . $searchstring . '%', $filterbyuser );
+			}
+
+			$events = $wpdb->get_results( $cleanquery, ARRAY_A );
+
+			$output .= '<!-- Event query: ' . $eventquery . ' -->';
 						
 			if ($events)
 			{
@@ -1880,9 +1901,10 @@ class community_events_plugin {
 					}
 				}
 				
-				if (count($events) > $maxevents)
-                    $dayofyearforcalc = $dayofyear - 1;
+				if (count($events) > $maxevents) {
+					$dayofyearforcalc = $dayofyear - 1;
 					$output .= "<tr><td><a href='#' onClick=\"showEvents('" . $dayofyear . "', '" . $year . "', false, true, '');return false;\">" . __( 'See all events for', 'community-events') . " " . date("l, M jS", strtotime('+ ' . $dayofyearforcalc . 'days', mktime(0,0,0,1,1,$year))) . "</a></td></tr>\n";
+				}
 			}
 		}
 		elseif ($outlook == 'false')
@@ -1894,6 +1916,10 @@ class community_events_plugin {
 			
 			if ($moderateevents == 'true')
 				$eventquery .= " and event_published = 'Y' ";
+
+			if ( !empty( $filterbyuser ) ) {
+				$eventquery .= " and event_submitter = '%s' ";
+			}
 				
 			$eventquery .= "UNION ";
 			
@@ -1927,6 +1953,10 @@ class community_events_plugin {
 			
 			if ($moderateevents == 'true')
 				$eventquery .= " and event_published = 'Y' ";
+
+			if ( !empty( $filterbyuser ) ) {
+				$eventquery .= " and event_submitter = '%s' ";
+			}
 				
 			$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
 
@@ -1938,8 +1968,14 @@ class community_events_plugin {
                 $eventquery .= 'event_start_ampm, start_hour, start_minute ';
             }
 
-			$events = $wpdb->get_results($eventquery, ARRAY_A);
-			
+			if ( !empty( $filterbyuser ) ) {
+				$cleanquery = $wpdb->prepare( $eventquery, $filterbyuser, $filterbyuser );
+			} else {
+				$cleanquery = $eventquery;
+			}
+
+			$events = $wpdb->get_results($cleanquery, ARRAY_A);
+
 			$dayofyearforcalc = $dayofyear - 1;
 					
 			if ($showdate == 'true')
@@ -2056,9 +2092,9 @@ class community_events_plugin {
 				$output .= "<button id='displayDate'>" . __( 'Go', 'community-events' ) . "!</button></td></tr>\n";
 			}
 		}
-		elseif ($outlook == 'true')
+		elseif ( $outlook == 'true' )
 		{	
-			for ($i = 0; $i <= 6; $i++)
+			for ( $i = 0; $i <= 6; $i++ )
 			{		
 				$calculatedday = $dayofyear + $i;
 			
@@ -2069,6 +2105,10 @@ class community_events_plugin {
 								
 				if ($moderateevents == 'true')
 					$eventquery .= " and event_published = 'Y' ";
+
+				if ( !empty( $filterbyuser ) ) {
+					$eventquery .= " and event_submitter = '%s' ";
+				}
 				
 				$eventquery .= "UNION ";
 				
@@ -2102,6 +2142,10 @@ class community_events_plugin {
 				
 				if ($moderateevents == 'true')
 					$eventquery .= " and event_published = 'Y' ";
+
+				if ( !empty( $filterbyuser ) ) {
+					$eventquery .= " and event_submitter = '%s' ";
+				}
 					
 				$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
 				
@@ -2112,9 +2156,15 @@ class community_events_plugin {
                 } else if ( $options['eventtimeorder'] ) {
                     $eventquery .= 'event_start_ampm, start_hour, start_minute ';
                 }
-				
-				$dayevents = $wpdb->get_results($eventquery, ARRAY_A);
-				
+
+				if ( !empty( $filterbyuser ) ) {
+					$cleanquery = $wpdb->prepare( $eventquery, $filterbyuser, $filterbyuser );
+				} else {
+					$cleanquery = $eventquery;
+				}
+
+				$dayevents = $wpdb->get_results( $cleanquery, ARRAY_A );
+
 				//echo "Day: " . $calculatedday . ", values are: " . print_r($dayevents);
 				
 				$output .= "\t\t<tr><td class='" . ($i % 2 == 0 ? "community-events-even" : "community-events-odd") . "'>";
@@ -2231,8 +2281,8 @@ class community_events_plugin {
 		return $output;
 	}
 		
-	function ce_7day($fullscheduleurl = '', $outlook = true, $addeventurl = '', $maxevents = 5, $moderateevents = true, $displaysearch = true, $outlookdefault = false,
-					 $allowuserediting = false, $displayendtimefield = false) {
+	function ce_7day( $fullscheduleurl = '', $outlook = true, $addeventurl = '', $maxevents = 5, $moderateevents = true, $displaysearch = true, $outlookdefault = false,
+					 $allowuserediting = false, $displayendtimefield = false, $filterbyuser = '' ) {
 		global $wpdb;
 		
 		$currentday = date("z", current_time('timestamp')) + 1;
@@ -2249,7 +2299,7 @@ class community_events_plugin {
 		if ($maxevents == '') $maxevents = 5;
 
 		$output .= "function showEvents ( _dayofyear, _year, _outlook, _showdate, _searchstring) {\n";
-		$output .= "var map = {dayofyear : _dayofyear, year : _year, outlook: _outlook, showdate: _showdate, maxevents: " . $maxevents . ", moderateevents: '" . ($moderateevents == true ? 'true' : 'false') . "', searchstring: _searchstring};\n";
+		$output .= "var map = {dayofyear : _dayofyear, year : _year, outlook: _outlook, showdate: _showdate, maxevents: " . $maxevents . ", moderateevents: '" . ($moderateevents == true ? 'true' : 'false') . "', searchstring: _searchstring, filterbyuser: '" . $filterbyuser . "'};\n";
 		$output .= "\tjQuery('.ce-7day-innertable').replaceWith('<div class=\"ce-7day-innertable\"><img src=\"" . WP_PLUGIN_URL . "/community-events/icons/Ajax-loader.gif\" alt=\"" . __( 'Loading data, please wait...', 'community-events' ) . "\"></div>');jQuery.get('" . WP_PLUGIN_URL . "/community-events/get-events.php', map, function(data){jQuery('.ce-7day-innertable').replaceWith(data);";
 		$output .= "\tjQuery('.cetooltip').each(function()\n";
 		$output .= "\t\t{ jQuery(this).tipTip(); }\n";
@@ -2302,7 +2352,7 @@ class community_events_plugin {
 
 		$output .= "</tr>\n\t<tr><td class='ce-inner-table-row' colspan='" . (($outlook == true) ? 8 : 7) . "'>\n";
 		
-		$output .= $this->eventlist($currentyear, $currentday, (($outlook == true && $outlookdefault == true)? 'true' : 'false'), 'false', $maxevents, ($moderateevents == true ? "true" : "false"), '', $fullscheduleurl, $addeventurl, $allowuserediting, $displayendtimefield);
+		$output .= $this->eventlist( $currentyear, $currentday, (($outlook == true && $outlookdefault == true)? 'true' : 'false'), 'false', $maxevents, ($moderateevents == true ? "true" : "false"), '', $fullscheduleurl, $addeventurl, $allowuserediting, $displayendtimefield, $filterbyuser );
 
 		$output .= "\t</td></tr>\n";
 		
@@ -2361,18 +2411,29 @@ class community_events_plugin {
 	}
 
 	function ce_full_func($atts) {
+
 		extract(shortcode_atts(array(
+			'filter_by_user' => '',
 		), $atts));
-		
+
 		$options = get_option('CE_PP');
-		
+
+		if ( 'current' == $filter_by_user ) {
+			$current_user = wp_get_current_user();
+			$filter_by_user = $current_user->user_login;
+		}
+
+		if ( !empty( $filter_by_user ) ) {
+			$filter_by_user = apply_filters( 'community_events_filter_user', $filter_by_user );
+		}
+
 		if ($options['schemaversion'] < 0.3)
 			$this->ce_install();
 		
-		return $this->ce_full($options['moderateevents'], $options['fullvieweventsperpage'], $options['fullviewmaxdays'], $options['fullscheduleurl'], $options['addeventurl'], $options['allowuserediting'], $options['displayendtimefield']);
+		return $this->ce_full( $options['moderateevents'], $options['fullvieweventsperpage'], $options['fullviewmaxdays'], $options['fullscheduleurl'], $options['addeventurl'], $options['allowuserediting'], $options['displayendtimefield'], $filter_by_user );
 	}
 
-	function ce_full($moderateevents = true, $fullvieweventsperpage = 20, $fullviewmaxdays = 90, $fullscheduleurl = '', $addeventurl = '', $allowuserediting = false, $displayendtimefield = false) {
+	function ce_full( $moderateevents = true, $fullvieweventsperpage = 20, $fullviewmaxdays = 90, $fullscheduleurl = '', $addeventurl = '', $allowuserediting = false, $displayendtimefield = false, $filterbyuser = '') {
 		global $wpdb;
 
         $options = get_option( 'CE_PP' );
@@ -2398,23 +2459,23 @@ class community_events_plugin {
 		if (isset($_GET['eventyear']) && isset($_GET['eventday']) && isset($_GET['dateset']))
 		{
 			$loopcount = 1;
-			$queryday = $_GET['eventday'];
-			$queryyear = $_GET['eventyear'];
+			$queryday = intval( $_GET['eventday'] );
+			$queryyear = intval( $_GET['eventyear'] );
 			$dayoffset = abs($queryday - $currentday);
 		}
 		else
 		{
-			$loopcount = $fullviewmaxdays;
-			$queryday = $currentday;
-			$queryyear = $currentyear;
+			$loopcount = intval( $fullviewmaxdays );
+			$queryday = intval( $currentday );
+			$queryyear = intval( $currentyear );
 		}
 		
 		if (isset($_GET['eventpage']))
 		{
-			$pagenumber = $_GET['eventpage'];
+			$pagenumber = intval( $_GET['eventpage'] );
 			if ($pagenumber < 1)
 				$pagenumber = 1;
-			$startingentry = ($pagenumber - 1) * $fullvieweventsperpage;
+			$startingentry = ($pagenumber - 1) * intval( $fullvieweventsperpage );
 		}
 		else
 		{
@@ -2512,7 +2573,7 @@ class community_events_plugin {
 			{
 				$output .= " " . __( 'Venue', 'community-events' ) . ": ";
 				
-				$venuenamequery = "select ce_venue_name from " . $wpdb->prefix . "ce_venues where ce_venue_id = " . $_GET['venue'];
+				$venuenamequery = "select ce_venue_name from " . $wpdb->prefix . "ce_venues where ce_venue_id = " . intval( $_GET['venue'] );
 				
 				$venuename = $wpdb->get_var($venuenamequery);
 				
@@ -2523,7 +2584,7 @@ class community_events_plugin {
 			{
 				$output .= " " . __( 'Category', 'community-events' ) . ": ";
 				
-				$categorynamequery = "select event_cat_name from " . $wpdb->prefix . "ce_category where event_cat_id = " . $_GET['category'];
+				$categorynamequery = "select event_cat_name from " . $wpdb->prefix . "ce_category where event_cat_id = " . intval( $_GET['category'] );
 				
 				$categoryname = $wpdb->get_var($categorynamequery);
 				
@@ -2557,25 +2618,25 @@ class community_events_plugin {
 			
 			if (isset($_GET['search']) && ($_GET['search'] != ''))
 			{
-				$eventquery .= " and ((event_name like '%" . $_GET['search'] . "%')";
-				$eventquery .= "    or (ce_venue_name like '%" . $_GET['search'] . "%')";
-				$eventquery .= "    or (ce_venue_city like '%" . $_GET['search'] . "%')";
-				$eventquery .= "    or (event_description like '%" . $_GET['search'] . "%'))";
+				$eventquery .= " and ((event_name like '%s')";
+				$eventquery .= "    or (ce_venue_name like '%s')";
+				$eventquery .= "    or (ce_venue_city like '%s')";
+				$eventquery .= "    or (event_description like '%s'))";
 			}
 			
 			if (isset($_GET['venueset']) && isset($_GET['venue']) && ($_GET['venue'] != ''))
 			{
-				$eventquery .= " and ce_venue_id = " . $_GET['venue'];
+				$eventquery .= " and ce_venue_id = " . intval( $_GET['venue'] );
 			}
 			
 			if (isset($_GET['categoryset']) && isset($_GET['category']) && ($_GET['category'] != ''))
 			{
-				$eventquery .= " and event_category = " . $_GET['category'];
+				$eventquery .= " and event_category = " . intval( $_GET['category'] );
 			}
 			
 			if (isset($_GET['locationset']) && isset($_GET['location']) && ($_GET['location'] != ''))
 			{
-				$eventquery .= " and ce_venue_city = '" . $_GET['location'] . "'";
+				$eventquery .= " and ce_venue_city = '%s'";
 			}
 			
 			$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) = " . $queryday . " ";
@@ -2583,6 +2644,10 @@ class community_events_plugin {
 			
 			if ($moderateevents == true)
 				$eventquery .= " and event_published = 'Y' ";
+
+			if ( !empty( $filterbyuser ) ) {
+				$eventquery .= " and event_submitter = '%s' ";
+			}
 				
 			$eventquery .= ") UNION ";
 			
@@ -2592,25 +2657,25 @@ class community_events_plugin {
 			
 			if (isset($_GET['search']) && ($_GET['search'] != ''))
 			{
-				$eventquery .= " ((event_name like '%" . $_GET['search'] . "%')";
-				$eventquery .= "    or (ce_venue_name like '%" . $_GET['search'] . "%')";
-				$eventquery .= "    or (ce_venue_city like '%" . $_GET['search'] . "%')";
-				$eventquery .= "    or (event_description like '%" . $_GET['search'] . "%')) and";
+				$eventquery .= " ((event_name like '%s')";
+				$eventquery .= "    or (ce_venue_name like '%s')";
+				$eventquery .= "    or (ce_venue_city like '%s')";
+				$eventquery .= "    or (event_description like '%s')) and";
 			}
 			
 			if (isset($_GET['venueset']) && isset($_GET['venue']) && ($_GET['venue'] != ''))
 			{
-				$eventquery .= " ce_venue_id = " . $_GET['venue'] . " and ";
+				$eventquery .= " ce_venue_id = " . intval( $_GET['venue'] ) . " and ";
 			}
 			
 			if (isset($_GET['categoryset']) && isset($_GET['category']) && ($_GET['category'] != ''))
 			{
-				$eventquery .= " event_category = " . $_GET['category'] . " and ";
+				$eventquery .= " event_category = " . intval( $_GET['category'] ) . " and ";
 			}
 			
 			if (isset($_GET['locationset']) && isset($_GET['location']) && ($_GET['location'] != ''))
 			{
-				$eventquery .= " ce_venue_city = '" . $_GET['location'] . "' and ";
+				$eventquery .= " ce_venue_city = '%s' and ";
 			}
 			
 			$eventquery .= "((YEAR(event_start_date) = " . $queryyear . " and YEAR(event_end_date) = " . $queryyear;
@@ -2639,7 +2704,11 @@ class community_events_plugin {
 			$eventquery .= " and DAYOFYEAR(DATE(event_end_date)) >= " . $queryday . ")) ";
 									
 			if ($moderateevents == true)
-				$eventquery .= " and event_published = 'Y' ";			
+				$eventquery .= " and event_published = 'Y' ";
+
+			if ( !empty( $filterbyuser ) ) {
+				$eventquery .= " and event_submitter = '%s' ";
+			}
 				
 			$eventquery .= " and (event_end_date IS NOT NULL) AND (event_end_date != event_start_date)";
 				
@@ -2651,7 +2720,41 @@ class community_events_plugin {
                 $eventquery .= 'event_start_ampm, start_hour, start_minute ';
             }
 
-			$events = $wpdb->get_results($eventquery, ARRAY_A);
+			$cleanquery = $eventquery;
+
+			if ( isset( $_GET['search'] ) && !empty( $_GET['search'] ) ) {
+				if ( !isset( $_GET['location'] ) || empty( $_GET['location'] ) ) {
+					if ( empty( $filterbyuser ) ) {
+						$cleanquery = $wpdb->prepare( $eventquery, '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%');
+					} else {
+						$cleanquery = $wpdb->prepare( $eventquery, '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', $filterbyuser, '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', $filterbyuser );
+					}
+				} elseif ( isset( $_GET['location'] ) || !empty( $_GET['location'] ) ) {
+					if ( empty( $filterbyuser ) ) {
+						$cleanquery = $wpdb->prepare( $eventquery, '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', $_GET['location'], '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', $_GET['location'] );
+					} else {
+						$cleanquery = $wpdb->prepare( $eventquery, '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', $_GET['location'], $filterbyuser, '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', '%' . $_GET['search'] . '%', $_GET['location'], $filterbyuser );
+					}
+				}
+			} elseif ( !isset( $_GET['search'] ) || empty( $_GET['search'] ) ) {
+				if ( !isset( $_GET['location'] ) || empty( $_GET['location'] ) ) {
+					if ( !empty( $filterbyuser ) ) {
+						$cleanquery = $wpdb->prepare( $eventquery, $filterbyuser, $filterbyuser );
+					}
+				} elseif ( isset( $_GET['location'] ) && !empty( $_GET['location'] ) ) {
+					if ( !empty( $filterbyuser ) ) {
+						$cleanquery = $wpdb->prepare( $eventquery, $_GET['location'], $filterbyuser, $_GET['location'], $filterbyuser );
+					} else {
+						$cleanquery = $wpdb->prepare( $eventquery, $_GET['location'], $_GET['location'] );
+					}
+				}
+			}
+
+			$events = '';
+
+			if ( !empty( $cleanquery ) ) {
+				$events = $wpdb->get_results( $cleanquery, ARRAY_A );
+			}
 			
 			$doy = 0;
 			
@@ -2767,8 +2870,7 @@ class community_events_plugin {
 				$output .= " <span class='ce-event-time'>" . $fullevent['event_start_hour'] . ":";
 				$output .= $fullevent['event_start_minute_zeros'] . " " . $fullevent['event_start_ampm'];
 				
-				if ($displayendtimefield == true)
-				{
+				if ( $displayendtimefield == true ) {
 					$output .= " - " . $fullevent['event_end_hour'] . ":" . $fullevent['event_end_minute_zeros'] . " " . $fullevent['event_end_ampm'];
 				}
 				
@@ -2776,15 +2878,12 @@ class community_events_plugin {
 
 				$output .= "</td></tr><tr>";
 				
-				if ($fullevent['ce_venue_name'] != "")
-				{
+				if ( !empty( $fullevent['ce_venue_name'] ) ) {
 					$output .= '<td colspan="2" class="ce-full-event-venue ' . ($daycount % 2 == 0 ? "community-events-even" : "community-events-odd" ) . '"><span class="cetooltip ce-venue-name" title="<strong>' . stripslashes($fullevent['ce_venue_name']) . '</strong><br />' . stripslashes($fullevent['ce_venue_address'])  . '<br />' . stripslashes($fullevent['ce_venue_city']) . '<br />' . $fullevent['ce_venue_zipcode'] . '<br />' . $fullevent['ce_venue_email'] . '<br />' . $fullevent['ce_venue_phone'] . '<br />' .  $fullevent['ce_venue_url'] . '"><a href="' . get_permalink() . '?venueset=1&amp;venue=' . $fullevent['ce_venue_id'] . '">' . stripslashes($fullevent['ce_venue_name']) . '</a> / <a href="' . get_permalink() . '?locationset=1&amp;location=' . stripslashes($fullevent['ce_venue_city']) . '">' . stripslashes($fullevent['ce_venue_city']) . '</a></span>';
 					
-					 if ($fullevent['event_ticket_url'] != "")
-					 {
+					 if ( !empty( $fullevent['event_ticket_url'] ) ) {
 						$output .= "<span class='ce-ticket-link'><a href='" . $fullevent['event_ticket_url'] . "'><img title='" . __( 'Ticket Link', 'community-events' ) . "' src='" . $this->cepluginpath . "/icons/tickets.gif' /></a></span>\n";
 					 }
-						
 					
 					$output .= "</td>\n";
 				}
@@ -2909,9 +3008,7 @@ class community_events_plugin {
 		
 		$output .= "});\n";
 		
-		
-		
-		$output .= "</SCRIPT>\n\n";		
+		$output .= "</SCRIPT>\n\n";
 
 		return $output;
 	}
@@ -3130,7 +3227,7 @@ class community_events_plugin {
 		{		
 			if (isset($_GET['editevent']) && $allowuserediting == true && current_user_can("read"))
 			{
-				$event = $wpdb->get_row("select * from " . $wpdb->get_blog_prefix() . "ce_events where event_id = " . $_GET['editevent'], ARRAY_A);
+				$event = $wpdb->get_row("select * from " . $wpdb->get_blog_prefix() . "ce_events where event_id = " . intval( $_GET['editevent'] ), ARRAY_A);
 				
 				if ($event)
 				{

@@ -24,6 +24,10 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.4 =
+* Add new feature to filter events by user name
+* Fix SQL injection vulnerabilities
+
 = 1.3.5 =
 * Modified script loading code only to be process on events page under admin section
 
