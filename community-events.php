@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://ylefebvre.ca/wordpress-plugins/community-events
 Description: A plugin used to manage events and display them in a widget
-Version: 1.4
+Version: 1.4.1
 Author: Yannick Lefebvre
 Author URI: http://ylefebvre.ca
 Copyright 2014  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA*/
 
 define('COMMUNITY_EVENTS_ADMIN_PAGE_NAME', 'community-events');
 
-define('CEDIR', dirname(__FILE__) . '/');
+require_once plugin_dir_path( __FILE__ ) . 'rssfeed.php';
 
 //class that reperesent the complete plugin
 class community_events_plugin {
@@ -51,7 +51,19 @@ class community_events_plugin {
 		add_action('admin_post_save_community_events_events', array($this, 'on_save_changes_events'));
 		add_action('admin_post_save_community_events_stylesheet', array($this, 'on_save_changes_stylesheet'));
 
-        add_action( 'wp_enqueue_scripts', array( $this, 'load_scripts' ) );
+		add_action( 'wp_ajax_community_events_frontend_list', array( $this, 'ajax_frontend_event_list' ) );
+		add_action( 'wp_ajax_nopriv_community_events_frontend_list', array( $this, 'ajax_frontend_event_list' ) );
+
+		add_action( 'wp_ajax_community_events_admin_list', array( $this, 'ajax_admin_event_list' ) );
+		add_action( 'wp_ajax_nopriv_community_events_admin_list', array( $this, 'ajax_admin_event_list' ) );
+
+		add_action( 'wp_ajax_community_events_click_tracker', array( $this, 'ajax_click_tracker' ) );
+		add_action( 'wp_ajax_nopriv_community_events_click_tracker', array( $this, 'ajax_click_tracker' ) );
+
+		add_action( 'wp_ajax_community_events_approval', array( $this, 'ajax_admin_event_approval' ) );
+		add_action( 'wp_ajax_nopriv_community_events_approval', array( $this, 'ajax_admin_event_approval' ) );
+
+		add_action( 'wp_enqueue_scripts', array( $this, 'load_scripts' ) );
 
         if ( is_admin() && isset( $_GET['page'] ) && $_GET['page'] == 'community-events-events' ) {
             add_action( 'admin_enqueue_scripts', array( $this, 'load_scripts' ) );
@@ -62,6 +74,8 @@ class community_events_plugin {
 		add_shortcode('community-events-addevent', array($this, 'ce_addevent_func'));
 		
 		add_action('wp_head', array($this, 'ce_header'));
+
+		add_action( 'init', array( $this, 'links_rss' ) );
 		
 		add_action('ce_daily_event', array($this, 'ce_daily_cleanup'));
 		
@@ -70,6 +84,91 @@ class community_events_plugin {
 
         // Load text domain for translation of admin pages and text strings
         load_plugin_textdomain( 'community-events', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+	}
+
+	function links_rss() {
+		add_feed( 'communityeventsfeed', 'community_events_rss_feed' );
+	}
+
+	function ajax_frontend_event_list() {
+		$year           = intval( $_GET['year'] );
+		$outlook        = $_GET['outlook'];
+		$showdate       = $_GET['showdate'];
+		$maxevents      = intval( $_GET['maxevents'] );
+		$moderateevents = $_GET['moderateevents'];
+		$searchstring   = $_GET['searchstring'];
+		$filterbyuser   = $_GET['filterbyuser'];
+
+		$options = get_option( 'CE_PP' );
+
+		if ( 'current' == $filterbyuser ) {
+			$current_user = wp_get_current_user();
+			$filterbyuser = $current_user->user_login;
+		}
+
+		if ( !empty( $filterbyuser ) ) {
+			$filterbyuser = apply_filters( 'community_events_filter_user', $filterbyuser );
+		}
+
+		echo $this->eventlist( $year, $_GET['dayofyear'], $outlook, $showdate, $maxevents, $moderateevents, $searchstring, $options['fullscheduleurl'],
+			$options['addeventurl'], $options['allowuserediting'], $options['displayendtimefield'], $filterbyuser );
+
+		exit;
+	}
+
+	function ajax_admin_event_list() {
+		$currentyear = intval( $_GET['currentyear'] );
+		$currentday = intval( $_GET['currentday'] );
+		$page = intval( $_GET['page'] );
+		$moderate = $_GET['moderate'];
+
+		if ($moderate == 'true')
+			$moderate = true;
+		else
+			$moderate = false;
+
+		echo $this->print_event_table($currentyear, $currentday, $page, $moderate);
+
+		exit;
+	}
+
+	function ajax_click_tracker() {
+		$event_id = intval($_POST['id']);
+		echo "Received ID is: " . $event_id;
+
+		global $wpdb;
+
+		$ceeventtable = $wpdb->get_blog_prefix() . "ce_events";
+		$ceeventdataquery = "select * from " . $wpdb->get_blog_prefix() . "ce_events where event_id = " . $event_id;
+		$eventdata = $wpdb->get_row($ceeventdataquery, ARRAY_A);
+
+		if ($eventdata)
+		{
+			$newcount = $eventdata['event_click_count'] + 1;
+			$wpdb->update( $ceeventtable, array( 'event_click_count' => $newcount ), array( 'event_id' => $event_id ));
+			echo "Updated row";
+		}
+		else
+		{
+			$wpdb->insert( $ceeventtable, array( 'event_id' => $link_id, 'event_click_count' => 1 ));
+			echo "Inserted new row";
+		}
+
+		exit;
+	}
+
+	function ajax_admin_event_approval() {
+		$events = $_GET['eventlist'];
+
+		foreach ($events as $event)
+		{
+			$id = array("event_id" => $event);
+			$published = array("event_published" => 'Y');
+
+			$wpdb->update( $wpdb->prefix.'ce_events', $published, $id);
+		}
+
+		exit;
 	}
 
     function load_scripts() {
@@ -151,7 +250,7 @@ class community_events_plugin {
             $options['eventorder'] = 'eventnameorder';
 			$options['schemaversion'] = 1.2;
 			
-			$stylesheetlocation = CEDIR . '/stylesheettemplate.css';
+			$stylesheetlocation = plugins_url( '/stylesheettemplate.css', __FILE__ );
 			if (file_exists($stylesheetlocation))
 				$options['fullstylesheet'] = file_get_contents($stylesheetlocation);
 			
@@ -263,7 +362,7 @@ class community_events_plugin {
 				
 			if ($options['fullstylesheet'] == '')
 			{
-				$stylesheetlocation = CEDIR . '/stylesheettemplate.css';
+				$stylesheetlocation = plugins_url( 'stylesheettemplate.css', __FILE__ );
 				if (file_exists($stylesheetlocation))
 					$options['fullstylesheet'] = file_get_contents($stylesheetlocation);
 			}
@@ -844,7 +943,7 @@ class community_events_plugin {
 		{
 			$options = get_option('CE_PP');
 
-			$stylesheetlocation = CEDIR . '/stylesheettemplate.css';
+			$stylesheetlocation = plugins_url( 'stylesheettemplate.css', __FILE__ );
 			if (file_exists($stylesheetlocation))
 				$options['fullstylesheet'] = file_get_contents($stylesheetlocation);
 
@@ -1664,9 +1763,9 @@ class community_events_plugin {
 						{
 								var el = jQuery('#eventpage');
 								el.val( parseInt( el.val(), 10 ) + 1 );
-								var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: el.val(), moderate: jQuery('#moderatestatus').val() };
+								var map = {action: 'community_events_admin_list', currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: el.val(), moderate: jQuery('#moderatestatus').val() };
 								jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"<?php _e( 'Loading data, please wait...', 'community-events'); ?>\"></div>');
-								jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/get-events-admin.php', map, function(data){
+								jQuery.get('<?php echo admin_url( 'admin-ajax.php' ); ?>', map, function(data){
 									jQuery('#ce-event-list').replaceWith(data);});
 						}
 						
@@ -1674,23 +1773,23 @@ class community_events_plugin {
 						{
 								var el = jQuery('#eventpage'); 
 								el.val( parseInt( el.val(), 10 ) - 1 );
-								var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: el.val(), moderate: jQuery('#moderatestatus').val() };
-								jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"<?php _e( 'Loading data, please wait...', 'community-events'); ?>\"></div>');jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/get-events-admin.php', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
+								var map = {action: 'community_events_admin_list', currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: el.val(), moderate: jQuery('#moderatestatus').val() };
+								jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"<?php _e( 'Loading data, please wait...', 'community-events'); ?>\"></div>');jQuery.get('<?php echo admin_url( 'admin-ajax.php' ) ?>', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
 						}
 						
 						function moderatemode()
 						{
 							jQuery('#moderatestatus').val('true');
-							var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: 1, moderate: 'true' };
-							jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"<?php _e( 'Loading data, please wait...', 'community-events'); ?>\"></div>');jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/get-events-admin.php', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
+							var map = {action: 'community_events_admin_list', currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: 1, moderate: 'true' };
+							jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"<?php _e( 'Loading data, please wait...', 'community-events'); ?>\"></div>');jQuery.get('<?php echo admin_url( 'admin-ajax.php' ); ?>', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
 							jQuery('#eventpage').val(1);
 						}
 							
 						function normalmode()
 						{
 							jQuery('#moderatestatus').val('false');
-							var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: 1, moderate: 'false' };
-							jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"<?php _e( 'Loading data, please wait...', 'community-events' ); ?>\"></div>');jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/get-events-admin.php', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
+							var map = {action: 'community_events_admin_list', currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: 1, moderate: 'false' };
+							jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"<?php _e( 'Loading data, please wait...', 'community-events' ); ?>\"></div>');jQuery.get('<?php echo admin_url( 'admin-ajax.php' ); ?>', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
 							jQuery('#eventpage').val(1);
 						}
 							
@@ -1699,9 +1798,9 @@ class community_events_plugin {
 							var values = new Array();
 							jQuery.each(jQuery("input[name='events[]']:checked"), function() {
 							  values.push(jQuery(this).val());
-							  var map = { eventlist: values };
-							  jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/approveevents.php', map, function(data) {});
-							  var map = {currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: 1, moderate: 'true' };									  jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"<?php _e( 'Loading data, please wait...', 'community-events' ); ?>\"></div>');jQuery.get('<?php echo WP_PLUGIN_URL; ?>/community-events/get-events-admin.php', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
+							  var map = { action: 'community_events_approval', eventlist: values };
+							  jQuery.get('<?php echo admin_url( 'admin-ajax.php' ); ?>', map, function(data) {});
+							  var map = {action: 'community_events_admin_list', currentyear : <?php echo $currentyear; ?>, currentday : <?php echo $currentday; ?>, page: 1, moderate: 'true' };									  jQuery('#ce-event-list').replaceWith('<div id=\"ce-event-list\"><img src=\"<?php echo WP_PLUGIN_URL; ?>/community-events/icons/Ajax-loader.gif\" alt=\"<?php _e( 'Loading data, please wait...', 'community-events' ); ?>\"></div>');jQuery.get('<?php echo admin_url( 'admin-ajax.php' ); ?>', map, function(data){jQuery('#ce-event-list').replaceWith(data);});
 							});
 						}
 						</script>	
@@ -1756,7 +1855,7 @@ class community_events_plugin {
 		if ($options['publishfeed'] == true)
 		{
 			$feedtitle = ($options['rssfeedtitle'] == "" ? __('Community Events Calendar Feed', 'community-events') : $options['rssfeedtitle']);
-			echo '<link rel="alternate" type="application/rss+xml" title="' . esc_html(stripslashes($feedtitle)) . '" href="' . $this->cepluginpath . 'rssfeed.php" />';
+			echo '<link rel="alternate" type="application/rss+xml" title="' . esc_html(stripslashes($feedtitle)) . '" href="' . home_url() . '/feed/communityeventsfeed" />';
 		}
 	}
 
@@ -2299,8 +2398,8 @@ class community_events_plugin {
 		if ($maxevents == '') $maxevents = 5;
 
 		$output .= "function showEvents ( _dayofyear, _year, _outlook, _showdate, _searchstring) {\n";
-		$output .= "var map = {dayofyear : _dayofyear, year : _year, outlook: _outlook, showdate: _showdate, maxevents: " . $maxevents . ", moderateevents: '" . ($moderateevents == true ? 'true' : 'false') . "', searchstring: _searchstring, filterbyuser: '" . $filterbyuser . "'};\n";
-		$output .= "\tjQuery('.ce-7day-innertable').replaceWith('<div class=\"ce-7day-innertable\"><img src=\"" . WP_PLUGIN_URL . "/community-events/icons/Ajax-loader.gif\" alt=\"" . __( 'Loading data, please wait...', 'community-events' ) . "\"></div>');jQuery.get('" . WP_PLUGIN_URL . "/community-events/get-events.php', map, function(data){jQuery('.ce-7day-innertable').replaceWith(data);";
+		$output .= "var map = {action: 'community_events_frontend_list', dayofyear : _dayofyear, year : _year, outlook: _outlook, showdate: _showdate, maxevents: " . $maxevents . ", moderateevents: '" . ($moderateevents == true ? 'true' : 'false') . "', searchstring: _searchstring, filterbyuser: '" . $filterbyuser . "'};\n";
+		$output .= "\tjQuery('.ce-7day-innertable').replaceWith('<div class=\"ce-7day-innertable\"><img src=\"" . WP_PLUGIN_URL . "/community-events/icons/Ajax-loader.gif\" alt=\"" . __( 'Loading data, please wait...', 'community-events' ) . "\"></div>');jQuery.get('" . admin_url( 'admin-ajax.php' ) . "', map, function(data){jQuery('.ce-7day-innertable').replaceWith(data);";
 		$output .= "\tjQuery('.cetooltip').each(function()\n";
 		$output .= "\t\t{ jQuery(this).tipTip(); }\n";
 		$output .= "\t);});\n\n";
@@ -3002,7 +3101,7 @@ class community_events_plugin {
 		$output .= "}   });\n";
 		
 		$output .= "jQuery('a.track_this_event').click(function() {\n";
-		$output .= "jQuery.post('" . WP_PLUGIN_URL . "/community-events/tracker.php', {id:this.id});\n";
+		$output .= "jQuery.post('" . admin_url( 'admin-ajax.php' ) . "', {action:'community_events_click_tracker',id:this.id});\n";
 		$output .= "return true;\n";
 		$output .= "});\n";
 		
