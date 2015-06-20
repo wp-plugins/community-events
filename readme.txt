@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.4.2 =
+* Fix to RSS Feed generator
+
 = 1.4.1 =
 * Removed all traces of wp-load.php
 * Changed RSS feed URL from wp-content/plugins/community-events/rssfeed.php to /feed/communityeventsfeed (need to save Permalinks to enable)

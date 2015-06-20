@@ -53,7 +53,7 @@ function community_events_rss_feed() {
 	$eventquery .= "UNIX_TIMESTAMP(event_start_date) as datestamp, DAYOFYEAR(DATE(event_start_date)) as doy from " . $wpdb->prefix . "ce_events e LEFT JOIN ";
 	$eventquery .= $wpdb->prefix . "ce_venues v ON e.event_venue = v.ce_venue_id LEFT JOIN " . $wpdb->prefix . "ce_category c ON e.event_category = c.event_cat_id ";
 	$eventquery .= "where YEAR(event_start_date) = " . $queryyear;
-	$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) = " . $queryday . " ";
+	$eventquery .= " and DAYOFYEAR(DATE(event_start_date)) >= " . $queryday . " ";
 	$eventquery .= " and event_end_date IS NULL ";
 
 	if ($options['moderateevents'] == true)
@@ -85,8 +85,6 @@ function community_events_rss_feed() {
 
 	$eventquery .= ") order by event_start_date, event_name";
 	$events = $wpdb->get_results($eventquery, ARRAY_A);
-
-	//print_r($events);
 
 	if ($events)
 	{

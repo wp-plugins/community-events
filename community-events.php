@@ -2,10 +2,10 @@
 /*Plugin Name: Community Events
 Plugin URI: http://ylefebvre.ca/wordpress-plugins/community-events
 Description: A plugin used to manage events and display them in a widget
-Version: 1.4.1
+Version: 1.4.2
 Author: Yannick Lefebvre
 Author URI: http://ylefebvre.ca
-Copyright 2014  Yannick Lefebvre  (email : ylefebvre@gmail.com)
+Copyright 2015  Yannick Lefebvre  (email : ylefebvre@gmail.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
