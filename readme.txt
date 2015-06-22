@@ -1,6 +1,6 @@
 === Community Events ===
 Contributors: jackdewey
-Donate link: http://yannickcorner.nayanna.biz/wordpress-plugins/community-events/
+Donate link: http://ylefebvre.ca/wordpress-plugins/community-events/
 Tags: events, list, AJAX, calendar, community
 Requires at least: 3.0
 Tested up to: 4.2
