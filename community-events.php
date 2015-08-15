@@ -2,7 +2,7 @@
 /*Plugin Name: Community Events
 Plugin URI: http://ylefebvre.ca/wordpress-plugins/community-events
 Description: A plugin used to manage events and display them in a widget
-Version: 1.4.2
+Version: 1.4.3
 Author: Yannick Lefebvre
 Author URI: http://ylefebvre.ca
 Copyright 2015  Yannick Lefebvre  (email : ylefebvre@gmail.com)
@@ -275,6 +275,9 @@ class community_events_plugin {
 					  event_published varchar(1) DEFAULT NULL,
 					  event_submitter VARCHAR(60) DEFAULT NULL,
 					  event_click_count INT(11) DEFAULT NULL,
+					  event_end_hour INT(11) DEFAULT NULL,
+					  event_end_minute INT(2) unsigned zerofill DEFAULT NULL,
+					  event_end_ampm VARCHAR(2) DEFAULT NULL,
 					  UNIQUE KEY (event_id)
 						) ") ;
 	
@@ -316,10 +319,8 @@ class community_events_plugin {
 					INSERT INTO " . $wpdb->cevenues . " (ce_venue_name) VALUES
 					('Default')");	
 	
-		}
-		else
-		{
-			if ($options['schemaversion'] < 0.3)
+		} else {
+			if ( isset( $options['schemaversion'] ) && $options['schemaversion'] < 0.3)
 			{
 				$options['schemaversion'] = 0.3;
 				update_option('CE_PP',$options);
@@ -330,38 +331,34 @@ class community_events_plugin {
 				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events ADD event_published VARCHAR( 1 ) NULL;");
 			}
 
-			if ($options['schemaversion'] < 1.0)
-			{
+			if ( isset( $options['schemaversion'] ) && $options['schemaversion'] < 1.0 ) {
 				$options['schemaversion'] = 1.0;
 				update_option('CE_PP',$options);
 				
 				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events ADD event_submitter VARCHAR(60) NULL AFTER event_published;");
 			}
 			
-			if ($options['schemaversion'] < 1.1)
-			{
+			if ( isset( $options['schemaversion'] ) && $options['schemaversion'] < 1.1 ) {
 				$options['schemaversion'] = 1.1;
 				update_option('CE_PP',$options);
 				
 				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events ADD event_click_count INT(11) NULL AFTER event_submitter;");
 			}
 			
-			if ($options['schemaversion'] < 1.2)
-			{
+			if ( isset( $options['schemaversion'] ) && $options['schemaversion'] < 1.2 ) {
 				$options['schemaversion'] = 1.2;
 				update_option('CE_PP',$options);
 				
 				$wpdb->get_results("ALTER TABLE " . $wpdb->prefix . "ce_events ADD event_end_hour INT(11) NULL AFTER event_click_count, ADD event_end_minute INT(2) UNSIGNED ZEROFILL NULL AFTER event_end_hour, ADD event_end_ampm VARCHAR(2) NULL AFTER event_end_minute;");
 			}
 			
-			if ($options['fullvieweventsperpage'] == '')
+			if ( isset( $options['fullvieweventsperpage'] ) && empty( $options['fullvieweventsperpage'] ) )
 				$options['fullvieweventsperpage'] = 20;
 				
-			if ($options['fullviewmaxdays'] == '')
+			if ( isset( $options['fullviewmaxdays'] ) && empty( $options['fullviewmaxdays'] ) )
 				$options['fullviewmaxdays'] = 90;
 				
-			if ($options['fullstylesheet'] == '')
-			{
+			if ( isset( $options['fullviewmaxdays'] ) && empty( $options['fullstylesheet'] ) ) {
 				$stylesheetlocation = plugins_url( 'stylesheettemplate.css', __FILE__ );
 				if (file_exists($stylesheetlocation))
 					$options['fullstylesheet'] = file_get_contents($stylesheetlocation);

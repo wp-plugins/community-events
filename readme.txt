@@ -24,6 +24,9 @@ The purpose of this plugin is to allow users to create a schedule of upcoming ev
 
 == Changelog ==
 
+= 1.4.3 =
+* Fixed issues with database table creation affecting new plugin users
+
 = 1.4.2 =
 * Fix to RSS Feed generator
 
