@@ -3,7 +3,7 @@ Contributors: jackdewey
 Donate link: http://ylefebvre.ca/wordpress-plugins/community-events/
 Tags: events, list, AJAX, calendar, community
 Requires at least: 3.0
-Tested up to: 4.2
+Tested up to: 4.3
 Stable tag: trunk
 
 The purpose of this plugin is to allow users to create a schedule of upcoming events and display events for the next 7 days in an AJAX-driven box or displaying a full list of upcoming events.
